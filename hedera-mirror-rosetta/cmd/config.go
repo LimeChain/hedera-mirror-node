@@ -1,26 +1,41 @@
 package main
 
 import (
-	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/types"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/types"
 	"gopkg.in/yaml.v2"
 )
 
-func GetConfig() *types.Config {
-	filename, _ := filepath.Abs("config/application.yml")
+const (
+	defaultConfigFile = "config/application.yml"
+	mainConfigFile    = "application/yml"
+)
+
+func LoadConfig() *types.Config {
+	var config types.Config
+	GetConfig(&config, defaultConfigFile)
+	GetConfig(&config, mainConfigFile)
+
+	return &config
+}
+
+func GetConfig(config *types.Config, path string) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return
+	}
+
+	filename, _ := filepath.Abs(path)
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var config types.Config
-	err = yaml.Unmarshal(yamlFile, &config)
+	err = yaml.Unmarshal(yamlFile, config)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	return &config
 }

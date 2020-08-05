@@ -18,7 +18,7 @@ func NewBlockchainRouter(
 }
 
 func main() {
-	config := GetConfig()
+	config := LoadConfig()
 
 	network := &types.NetworkIdentifier{
 		Blockchain: "Hedera",
