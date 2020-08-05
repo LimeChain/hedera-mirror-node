@@ -24,13 +24,20 @@ func NewBlockAPIService(network *types.NetworkIdentifier, blockRepo repositories
 
 // Block implements the /block endpoint.
 func (s *BlockAPIService) Block(ctx context.Context, request *types.BlockRequest) (*types.BlockResponse, *types.Error) {
+	// var block = types.Block{}
 
-	block := s.blockRepo.FindByIndex(*request.BlockIdentifier.Index) // TODO
+	// if request.BlockIdentifier.Hash != nil && request.BlockIdentifier.Index != nil {
+	// 	block = s.blockRepo.FindByIndentifier(*request.BlockIdentifier.Index, *request.BlockIdentifier.Hash)
+	// } else if request.BlockIdentifier.Hash == nil {
+	// 	block = s.blockRepo.FindByIndex(*request.BlockIdentifier.Index)
+	// } else if request.BlockIdentifier.Index == nil {
+	// 	block = s.blockRepo.FindByHash(*request.BlockIdentifier.Hash)
+	// }
 
-	rBlock := block.ToRosettaBlock()
+	// rBlock := block.ToRosettaBlock()
 
 	return &types.BlockResponse{
-		Block: rBlock,
+		Block: &types.Block{},
 	}, nil
 }
 
