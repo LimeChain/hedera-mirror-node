@@ -14,22 +14,15 @@ type Mirror struct {
 
 type Rosetta struct {
 	Network string `yaml:"network"`
-
-	Db Db `yaml:"db"`
-
-	Port string `yaml:"port"`
-
-	Shard string `yaml:"shard"`
+	Db      Db     `yaml:"db"`
+	Port    string `yaml:"port"`
+	Shard   string `yaml:"shard"`
 }
 
 type Db struct {
-	Host string `yaml:"host"`
-
-	Name string `yaml:"name"`
-
+	Host     string `yaml:"host"`
+	Name     string `yaml:"name"`
 	Password string `yaml:"password"`
-
-	Port string `yaml:"port"`
-
+	Port     string `yaml:"port"`
 	Username string `yaml:"username"`
 }
