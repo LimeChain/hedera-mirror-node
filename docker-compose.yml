@@ -59,3 +59,5 @@ services:
       - ./application.yml:/src/hedera-mirror-rosetta/application.yml
     ports:
       - 5700:5700
+    depends_on:
+      - "db"
