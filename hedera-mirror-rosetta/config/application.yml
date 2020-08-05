@@ -3,7 +3,7 @@ hedera:
   mirror:
     rosetta:
       db:
-        host: 127.0.0.1
+        host: localhost
         name: mirror_node
         password: mirror_node_pass
         port: 5432

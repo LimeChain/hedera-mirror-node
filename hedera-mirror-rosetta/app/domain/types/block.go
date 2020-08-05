@@ -10,6 +10,7 @@ type Block struct {
 	Hash         string
 	ParentID     int64
 	ParentHash   string
+	Timestamp    int64
 	Transactions []Transaction
 }
 

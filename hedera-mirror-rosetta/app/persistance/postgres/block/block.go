@@ -37,7 +37,7 @@ func (br *BlockRepository) FindByIndex(index int64) *types.Block {
 	br.dbClient.Find(rf, index)
 	parentRf := br.findRecordFileByHash(rf.PrevHash)
 
-	return &types.Block{ID: rf.ID, Hash: rf.FileHash, ParentID: parentRf.ID, ParentHash: parentRf.FileHash}
+	return &types.Block{ID: rf.ID, Hash: rf.FileHash, ParentID: parentRf.ID, ParentHash: parentRf.FileHash, Timestamp: rf.ConsensusEnd}
 }
 
 // FindByHash retrieves a block by a given Hash
@@ -46,7 +46,7 @@ func (br *BlockRepository) FindByHash(hash string) *types.Block {
 	br.dbClient.Where(&recordFile{FileHash: hash}).Find(rf)
 	parentRf := br.findRecordFileByHash(rf.PrevHash)
 
-	return &types.Block{ID: rf.ID, Hash: rf.FileHash, ParentID: parentRf.ID, ParentHash: parentRf.FileHash}
+	return &types.Block{ID: rf.ID, Hash: rf.FileHash, ParentID: parentRf.ID, ParentHash: parentRf.FileHash, Timestamp: rf.ConsensusEnd}
 }
 
 // FindByIndentifier retrivies a block by Index && Hash
@@ -55,7 +55,7 @@ func (br *BlockRepository) FindByIndentifier(index int64, hash string) *types.Bl
 	br.dbClient.Where(&recordFile{ID: index, FileHash: hash}).Find(rf)
 	parentRf := br.findRecordFileByHash(rf.PrevHash)
 
-	return &types.Block{ID: rf.ID, Hash: rf.FileHash, ParentID: parentRf.ID, ParentHash: parentRf.FileHash}
+	return &types.Block{ID: rf.ID, Hash: rf.FileHash, ParentID: parentRf.ID, ParentHash: parentRf.FileHash, Timestamp: rf.ConsensusEnd}
 }
 
 func (br *BlockRepository) findRecordFileByHash(hash string) *recordFile {

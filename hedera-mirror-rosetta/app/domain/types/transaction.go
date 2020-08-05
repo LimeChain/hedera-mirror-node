@@ -6,7 +6,8 @@ import (
 
 // Transaction is domain level struct used to represent Transaction conceptual mapping in Hedera
 type Transaction struct {
-	ID string
+	ID         string
+	Operations []Operation
 }
 
 // FromRosettaTransaction populates domain type Transaction from Rosetta type Transaction

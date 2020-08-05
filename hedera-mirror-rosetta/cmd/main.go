@@ -9,6 +9,7 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/server"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistance/postgres/block"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistance/postgres/transaction"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/services"
 	"github.com/jinzhu/gorm"
 )
@@ -18,6 +19,12 @@ import (
 func NewBlockchainRouter(network *types.NetworkIdentifier, asserter *asserter.Asserter, dbClient *gorm.DB) http.Handler {
 
 	blockRepo := block.NewBlockRepository(dbClient)
+	transactionRepo := transaction.NewTransactionRepository(dbClient)
+
+	transactionRepo.FindByTimestamp(1570800761443132000)
+
+	transactionRepo.FindBetween(1570800761443132000, 1570800804212804002)
+
 	blockAPIService := services.NewBlockAPIService(network, blockRepo)
 	blockAPIController := server.NewBlockAPIController(blockAPIService, asserter)
 
