@@ -12,7 +12,7 @@ import (
 
 const (
 	defaultConfigFile = "config/application.yml"
-	mainConfigFile    = "application/yml"
+	mainConfigFile    = "application.yml"
 )
 
 func LoadConfig() *types.Config {
