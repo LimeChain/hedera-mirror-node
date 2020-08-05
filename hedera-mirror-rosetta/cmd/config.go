@@ -19,6 +19,7 @@ func LoadConfig() *types.Config {
 	var config types.Config
 	GetConfig(&config, defaultConfigFile)
 	GetConfig(&config, mainConfigFile)
+	config.Hedera.Mirror.Rosetta.Db.Host = os.Getenv("HEDERA_MIRROR_ROSETTA_DB_HOST")
 
 	return &config
 }
