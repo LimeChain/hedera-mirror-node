@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/coinbase/rosetta-sdk-go/asserter"
 	"github.com/coinbase/rosetta-sdk-go/server"
@@ -31,7 +32,7 @@ func main() {
 
 	network := &types.NetworkIdentifier{
 		Blockchain: "Hedera",
-		Network:    config.Hedera.Mirror.Rosetta.Network,
+		Network:    strings.ToLower(config.Hedera.Mirror.Rosetta.Network),
 		SubNetworkIdentifier: &types.SubNetworkIdentifier{
 			Network: fmt.Sprintf("shard %s realm %s", config.Hedera.Mirror.Rosetta.Shard, config.Hedera.Mirror.Rosetta.Realm),
 		},
