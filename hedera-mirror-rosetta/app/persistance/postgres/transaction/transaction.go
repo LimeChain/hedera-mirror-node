@@ -108,7 +108,7 @@ func (tr *TransactionRepository) GetStatuses() map[int]string {
 func (tr *TransactionRepository) FindByTimestamp(timestamp int64) *types.Transaction {
 	t := &transaction{}
 	tr.dbClient.Find(t, timestamp)
-	tResult := constructTransaction(tr, t)
+	tResult := tr.constructTransaction(t)
 	return &tResult
 }
 
@@ -122,7 +122,7 @@ func (tr *TransactionRepository) FindBetween(start int64, end int64) ([]types.Tr
 
 	res := make([]types.Transaction, len(tArray))
 	for i, t := range tArray {
-		res[i] = constructTransaction(tr, &t)
+		res[i] = tr.constructTransaction(&t)
 	}
 	return res, nil
 }
@@ -145,17 +145,17 @@ func (tr *TransactionRepository) retrieveTransactionStatuses() []transactionStat
 	return statuses
 }
 
-func constructTransaction(tr *TransactionRepository, t *transaction) types.Transaction {
+func (tr *TransactionRepository) constructTransaction(t *transaction) types.Transaction {
 	tResult := types.Transaction{ID: t.constructID()}
 
 	ctArray := tr.findCryptoTransfers(t.ConsensusNS)
-	oArray := constructOperations(ctArray, tr.types[t.Type], tr.statuses[t.Result])
+	oArray := tr.constructOperations(ctArray, tr.types[t.Type], tr.statuses[t.Result])
 	tResult.Operations = oArray
 
 	return tResult
 }
 
-func constructOperations(ctArray []cryptoTransfer, transactionType string, transactionStatus string) []types.Operation {
+func (tr *TransactionRepository) constructOperations(ctArray []cryptoTransfer, transactionType string, transactionStatus string) []types.Operation {
 	oArray := make([]types.Operation, len(ctArray))
 	for i, ct := range ctArray {
 		oArray[i] = types.Operation{Index: int64(i), Type: transactionType, Status: transactionStatus, EntityID: ct.EntityID, Amount: ct.Amount}
