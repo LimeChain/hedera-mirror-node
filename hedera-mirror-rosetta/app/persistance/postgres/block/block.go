@@ -58,6 +58,13 @@ func (br *BlockRepository) FindByIndentifier(index int64, hash string) *types.Bl
 	return &types.Block{ID: rf.ID, Hash: rf.FileHash, ParentID: parentRf.ID, ParentHash: parentRf.FileHash, Timestamp: rf.ConsensusEnd}
 }
 
+// RetrieveLatest retries the latest block
+func (br *BlockRepository) RetrieveLatest() *types.Block {
+	// rf := &recordFile{}
+	// br.dbClient.Where().Find(rf)
+	return nil
+}
+
 func (br *BlockRepository) findRecordFileByHash(hash string) *recordFile {
 	parentRf := &recordFile{}
 	br.dbClient.Where(&recordFile{FileHash: hash}).Find(parentRf)
