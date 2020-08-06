@@ -1,8 +1,6 @@
 package types
 
 import (
-	"log"
-
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 )
 
@@ -38,10 +36,8 @@ func (b *Block) FromRosettaBlock(rBlock *rTypes.Block) {
 func (b *Block) ToRosettaBlock() *rTypes.Block {
 	tArray := make([]*rTypes.Transaction, len(b.Transactions))
 	for i, t := range b.Transactions {
-		log.Println(i)
 		tArray[i] = t.ToRosettaTransaction()
 	}
-	log.Println(tArray)
 	rBlock := &rTypes.Block{
 		BlockIdentifier:       &rTypes.BlockIdentifier{Index: b.ID, Hash: b.Hash},
 		ParentBlockIdentifier: &rTypes.BlockIdentifier{Index: b.ParentID, Hash: b.ParentHash},
