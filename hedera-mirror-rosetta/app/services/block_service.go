@@ -24,11 +24,8 @@ func NewBlockAPIService(network *types.NetworkIdentifier, blockRepo repositories
 
 // Block implements the /block endpoint.
 func (s *BlockAPIService) Block(ctx context.Context, request *types.BlockRequest) (*types.BlockResponse, *types.Error) {
-
 	block := s.blockRepo.FindByIndex(*request.BlockIdentifier.Index) // TODO
-
 	rBlock := block.ToRosettaBlock()
-
 	return &types.BlockResponse{
 		Block: rBlock,
 	}, nil

@@ -16,5 +16,6 @@ func (t *Transaction) FromRosettaTransaction(rTransaction *rTypes.Transaction) *
 }
 
 // ToRosettaTransaction returns Rosetta type Transaction from the current domain type Transaction
-func (t *Transaction) ToRosettaTransaction(*rTypes.Transaction) {
+func (t *Transaction) ToRosettaTransaction() *rTypes.Transaction {
+	return nil // TODO Implement
 }
