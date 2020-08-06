@@ -73,7 +73,7 @@ type TransactionRepository struct {
 	statuses map[int]string
 }
 
-// NewTransactionRepository creates an instance of a TransactionRepository struct
+// NewTransactionRepository creates an instance of a TransactionRepository struct. Populates the transaction types and statuses on init
 func NewTransactionRepository(dbClient *gorm.DB) *TransactionRepository {
 	tr := &TransactionRepository{dbClient: dbClient}
 
