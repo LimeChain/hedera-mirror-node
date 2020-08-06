@@ -1,6 +1,6 @@
 # Overview
 The rosetta server is a REST API complying with the Rosetta API Specification [Rosetta API Specification](https://www.rosetta-api.org/docs/welcome.html). This server enables exchanges (ex. Coinbase) to be able to integrate and work with Hedera Hashgraph. The server is written in Golang and is largely based on [rosetta-sdk-go](https://github.com/coinbase/rosetta-sdk-go).
-It's main job is to respond to the Rosetta Specified requests, to the extent allowed by Hedera, while fetching information from the mirror node database.
+Its main job is to respond to the Rosetta Specified requests, to the extent allowed by Hedera, while fetching information from the mirror node database.
 
 ## Architecture
 ![Hedera Mirror Node Rosetta API](images/rosetta-server.png)
