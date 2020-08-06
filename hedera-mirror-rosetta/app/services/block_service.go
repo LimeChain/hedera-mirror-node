@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"log"
 
 	"github.com/coinbase/rosetta-sdk-go/server"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
@@ -44,10 +43,10 @@ func (s *BlockAPIService) Block(ctx context.Context, request *rTypes.BlockReques
 		return nil, &rTypes.Error{}
 	}
 
-	tArray := s.transactionRepo.FindBetween(block.ConsensusStart, block.ConsensusEnd)
+	// TODO fix the error handling
+	tArray, err := s.transactionRepo.FindBetween(block.ConsensusStart, block.ConsensusEnd)
 	block.Transactions = tArray
 
-	log.Println(block.Transactions)
 	rBlock := block.ToRosettaBlock()
 	return &rTypes.BlockResponse{
 		Block: rBlock,

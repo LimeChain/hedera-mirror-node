@@ -1,6 +1,8 @@
 package types
 
 import (
+	"strconv"
+
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 )
 
@@ -20,5 +22,20 @@ func (t *Operation) FromRosettaOperation(rOperation *rTypes.Operation) *Operatio
 
 // ToRosettaOperation returns Rosetta type Operation from the current domain type Operation
 func (t *Operation) ToRosettaOperation() *rTypes.Operation {
-	return nil
+	rOperation := rTypes.Operation{
+		OperationIdentifier: &rTypes.OperationIdentifier{
+			Index: t.Index,
+		},
+		RelatedOperations: []*rTypes.OperationIdentifier{}, //TODO
+		Type:              t.Type,
+		Status:            t.Status,
+		Account: &rTypes.AccountIdentifier{
+			Address: strconv.FormatInt(t.EntityID, 10), //TODO
+		},
+		Amount: &rTypes.Amount{
+			Value:    strconv.FormatInt(t.Amount, 10),
+			Currency: &rTypes.Currency{}, //TODO
+		},
+	}
+	return &rOperation
 }
