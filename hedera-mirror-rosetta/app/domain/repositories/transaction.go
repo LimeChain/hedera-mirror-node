@@ -8,4 +8,6 @@ import (
 type TransactionRepository interface {
 	FindByTimestamp(timestamp int64) *types.Transaction
 	FindBetween(start int64, end int64) []*types.Transaction
+	GetTypes() map[int]string
+	GetStatuses() map[int]string
 }
