@@ -145,7 +145,6 @@ func (tr *TransactionRepository) retrieveTransactionStatuses() []transactionStat
 	return statuses
 }
 
-// TODO -> is this the right place ?
 func constructTransaction(tr *TransactionRepository, t *transaction) types.Transaction {
 	tResult := types.Transaction{ID: t.constructID()}
 
@@ -156,7 +155,6 @@ func constructTransaction(tr *TransactionRepository, t *transaction) types.Trans
 	return tResult
 }
 
-// TODO -> should it be in the Transaction Domain type?
 func constructOperations(ctArray []cryptoTransfer, transactionType string, transactionStatus string) []types.Operation {
 	oArray := make([]types.Operation, len(ctArray))
 	for i, ct := range ctArray {
