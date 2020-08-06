@@ -6,8 +6,8 @@ import (
 
 // BlockRepository Interface that all BlockRepository structs must implement
 type BlockRepository interface {
-	FindByIndex(index int64) *types.Block
-	FindByHash(hash string) *types.Block
-	FindByIndentifier(index int64, hash string) *types.Block
-	RetrieveLatest() *types.Block
+	FindByIndex(index int64) (*types.Block, error)
+	FindByHash(hash string) (*types.Block, error)
+	FindByIndentifier(index int64, hash string) (*types.Block, error)
+	RetrieveLatest() (*types.Block, error)
 }

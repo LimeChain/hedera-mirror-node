@@ -19,5 +19,6 @@ func (t *Operation) FromRosettaOperation(rOperation *rTypes.Operation) *Operatio
 }
 
 // ToRosettaOperation returns Rosetta type Operation from the current domain type Operation
-func (t *Operation) ToRosettaOperation(*rTypes.Operation) {
+func (t *Operation) ToRosettaOperation() *rTypes.Operation {
+	return nil
 }

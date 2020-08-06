@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"log"
 
 	"github.com/coinbase/rosetta-sdk-go/server"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
@@ -11,36 +12,45 @@ import (
 
 // BlockAPIService implements the server.BlockAPIServicer interface.
 type BlockAPIService struct {
-	network   *rTypes.NetworkIdentifier
-	blockRepo repositories.BlockRepository
+	network         *rTypes.NetworkIdentifier
+	blockRepo       repositories.BlockRepository
+	transactionRepo repositories.TransactionRepository
 }
 
 // NewBlockAPIService creates a new instance of a BlockAPIService.
-func NewBlockAPIService(network *rTypes.NetworkIdentifier, blockRepo repositories.BlockRepository) server.BlockAPIServicer {
+func NewBlockAPIService(network *rTypes.NetworkIdentifier, blockRepo repositories.BlockRepository, transactionRepo repositories.TransactionRepository) server.BlockAPIServicer {
 	return &BlockAPIService{
-		network:   network,
-		blockRepo: blockRepo,
+		network:         network,
+		blockRepo:       blockRepo,
+		transactionRepo: transactionRepo,
 	}
 }
 
 // Block implements the /block endpoint.
 func (s *BlockAPIService) Block(ctx context.Context, request *rTypes.BlockRequest) (*rTypes.BlockResponse, *rTypes.Error) {
 	var block = &types.Block{}
+	var err error
 	if request.BlockIdentifier.Hash != nil && request.BlockIdentifier.Index != nil {
-		block = s.blockRepo.FindByIndentifier(*request.BlockIdentifier.Index, *request.BlockIdentifier.Hash)
+		block, err = s.blockRepo.FindByIndentifier(*request.BlockIdentifier.Index, *request.BlockIdentifier.Hash)
 	} else if request.BlockIdentifier.Hash == nil {
-		block = s.blockRepo.FindByIndex(*request.BlockIdentifier.Index)
+		block, err = s.blockRepo.FindByIndex(*request.BlockIdentifier.Index)
 	} else if request.BlockIdentifier.Index == nil {
-		block = s.blockRepo.FindByHash(*request.BlockIdentifier.Hash)
+		block, err = s.blockRepo.FindByHash(*request.BlockIdentifier.Hash)
 	} else {
-		block = s.blockRepo.RetrieveLatest()
+		block, err = s.blockRepo.RetrieveLatest()
 	}
-	// TODO what is it does not exist?
+	// TODO fix the error handling
+	if err != nil {
+		return nil, &rTypes.Error{}
+	}
 
+	tArray := s.transactionRepo.FindBetween(block.ConsensusStart, block.ConsensusEnd)
+	block.Transactions = tArray
+
+	log.Println(block.Transactions)
 	rBlock := block.ToRosettaBlock()
-
 	return &rTypes.BlockResponse{
-		Block: &rTypes.Block{},
+		Block: rBlock,
 	}, nil
 }
 

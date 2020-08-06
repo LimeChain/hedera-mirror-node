@@ -113,14 +113,14 @@ func (tr *TransactionRepository) FindByTimestamp(timestamp int64) *types.Transac
 }
 
 // FindBetween retrieves all Transactions between the provided start and end timestamp
-func (tr *TransactionRepository) FindBetween(start int64, end int64) ([]types.Transaction, error) {
+func (tr *TransactionRepository) FindBetween(start int64, end int64) ([]*types.Transaction, error) {
 	if start > end {
 		return nil, errors.New("start must be before end")
 	}
 	tArray := []transaction{}
 	tr.dbClient.Where("consensus_ns >= ? AND consensus_ns <= ?", start, end).Find(&tArray)
 
-	res := make([]types.Transaction, len(tArray))
+	res := make([]*types.Transaction, len(tArray))
 	for i, t := range tArray {
 		res[i] = constructTransaction(tr, &t)
 	}
@@ -155,10 +155,10 @@ func constructTransaction(tr *TransactionRepository, t *transaction) types.Trans
 	return tResult
 }
 
-func constructOperations(ctArray []cryptoTransfer, transactionType string, transactionStatus string) []types.Operation {
-	oArray := make([]types.Operation, len(ctArray))
+func constructOperations(ctArray []cryptoTransfer, transactionType string, transactionStatus string) []*types.Operation {
+	oArray := make([]*types.Operation, len(ctArray))
 	for i, ct := range ctArray {
-		oArray[i] = types.Operation{Index: int64(i), Type: transactionType, Status: transactionStatus, EntityID: ct.EntityID, Amount: ct.Amount}
+		oArray[i] = &types.Operation{Index: int64(i), Type: transactionType, Status: transactionStatus, EntityID: ct.EntityID, Amount: ct.Amount}
 	}
 	return oArray
 }

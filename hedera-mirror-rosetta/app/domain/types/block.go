@@ -1,17 +1,20 @@
 package types
 
 import (
+	"log"
+
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 )
 
 // Block is domain level struct used to represent Block conceptual mapping in Hedera
 type Block struct {
-	ID           int64
-	Hash         string
-	ParentID     int64
-	ParentHash   string
-	Timestamp    int64
-	Transactions []*Transaction
+	ID             int64
+	Hash           string
+	ParentID       int64
+	ParentHash     string
+	ConsensusStart int64
+	ConsensusEnd   int64
+	Transactions   []*Transaction
 }
 
 // FromRosettaBlock populates domain type Block from Rosetta type Block
@@ -20,7 +23,7 @@ func (b *Block) FromRosettaBlock(rBlock *rTypes.Block) {
 	b.Hash = rBlock.BlockIdentifier.Hash
 	b.ParentID = rBlock.ParentBlockIdentifier.Index
 	b.ParentHash = rBlock.ParentBlockIdentifier.Hash
-	b.Timestamp = rBlock.Timestamp
+	b.ConsensusEnd = rBlock.Timestamp
 
 	tArray := make([]*Transaction, len(rBlock.Transactions))
 	for i, rosettaT := range rBlock.Transactions {
@@ -35,13 +38,14 @@ func (b *Block) FromRosettaBlock(rBlock *rTypes.Block) {
 func (b *Block) ToRosettaBlock() *rTypes.Block {
 	tArray := make([]*rTypes.Transaction, len(b.Transactions))
 	for i, t := range b.Transactions {
+		log.Println(i)
 		tArray[i] = t.ToRosettaTransaction()
 	}
-
+	log.Println(tArray)
 	rBlock := &rTypes.Block{
 		BlockIdentifier:       &rTypes.BlockIdentifier{Index: b.ID, Hash: b.Hash},
 		ParentBlockIdentifier: &rTypes.BlockIdentifier{Index: b.ParentID, Hash: b.ParentHash},
-		Timestamp:             b.Timestamp,
+		Timestamp:             b.ConsensusEnd,
 		Transactions:          tArray,
 	}
 
