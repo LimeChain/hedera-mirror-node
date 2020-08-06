@@ -4,7 +4,7 @@ Its main job is to respond to the Rosetta Specified requests, to the extent allo
 
 ## Architecture
 ![Hedera Mirror Node Rosetta API](images/rosetta-server.png)
-The server is largely based on [rosetta-sdk-go](https://github.com/coinbase/rosetta-sdk-go) provided by the Rosetta. It takes care of significant part of the entity model definitions and some of the API work. It assumes the request and response models provided by Rosetta.
+The server is largely based on [rosetta-sdk-go](https://github.com/coinbase/rosetta-sdk-go) provided by Rosetta. It takes care of significant part of the entity model definitions and some of the API work. It assumes the request and response models provided by Rosetta.
 
 As General structure the Rosetta API server has 4 main components.
 ### Domain models
