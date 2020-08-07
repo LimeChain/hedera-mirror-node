@@ -8,6 +8,7 @@ import (
 type BlockRepository interface {
 	FindByIndex(index int64) (*types.Block, error)
 	FindByHash(hash string) (*types.Block, error)
-	FindByIndentifier(index int64, hash string) (*types.Block, error)
+	FindByIdentifier(index int64, hash string) (*types.Block, error)
+	RetrieveGenesis() (*types.Block, error)
 	RetrieveLatest() (*types.Block, error)
 }

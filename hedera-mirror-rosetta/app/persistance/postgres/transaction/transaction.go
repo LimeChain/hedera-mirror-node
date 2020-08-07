@@ -99,12 +99,23 @@ func (tr *TransactionRepository) GetTypes() map[int]string {
 	return tr.types
 }
 
+func (tr *TransactionRepository) GetTypesAsArray() []string {
+	// TODO: Export as helper function
+	values := make([]string, 0, len(tr.types))
+
+	for _, v := range tr.types {
+		values = append(values, v)
+	}
+
+	return values
+}
+
 // GetStatuses returns map of all Transaction Statuses
 func (tr *TransactionRepository) GetStatuses() map[int]string {
 	return tr.statuses
 }
 
-// FindByTimestamp retrieves Transaction by given timestmap
+// FindByTimestamp retrieves Transaction by given timestamp
 func (tr *TransactionRepository) FindByTimestamp(timestamp int64) *types.Transaction {
 	t := transaction{}
 	tr.dbClient.Find(&t, timestamp)

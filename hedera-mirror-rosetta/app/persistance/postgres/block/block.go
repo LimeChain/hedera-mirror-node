@@ -10,6 +10,11 @@ import (
 
 const genesisPreviousHash = "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 
+const (
+	whereClauseGenesisBlock string = "consensus_start = (SELECT MIN(consensus_start) FROM %s)"
+	whereClauseLatestBlock  string = "consensus_start = (SELECT MAX(consensus_start) FROM %s)"
+)
+
 type recordFile struct {
 	ID             int64  `gorm:"type:bigint;primary_key"`
 	Name           string `gorm:"size:250"`
@@ -64,8 +69,8 @@ func (br *BlockRepository) FindByHash(hash string) (*types.Block, error) {
 	return &types.Block{Hash: rf.FileHash, ParentIndex: parentRf.ConsensusStart, ParentHash: parentRf.FileHash, ConsensusStart: rf.ConsensusStart, ConsensusEnd: rf.ConsensusEnd}, nil
 }
 
-// FindByIndentifier retrivies a block by Index && Hash
-func (br *BlockRepository) FindByIndentifier(index int64, hash string) (*types.Block, error) {
+// FindByIdentifier retrieves a block by Index && Hash
+func (br *BlockRepository) FindByIdentifier(index int64, hash string) (*types.Block, error) {
 	rf := &recordFile{}
 	if br.dbClient.Where(&recordFile{ConsensusStart: index, FileHash: hash}).Find(rf).RecordNotFound() {
 		return nil, errors.New("block not found")
@@ -78,10 +83,19 @@ func (br *BlockRepository) FindByIndentifier(index int64, hash string) (*types.B
 	return &types.Block{Hash: rf.FileHash, ParentIndex: parentRf.ConsensusStart, ParentHash: parentRf.FileHash, ConsensusStart: rf.ConsensusStart, ConsensusEnd: rf.ConsensusEnd}, nil
 }
 
-// RetrieveLatest retries the latest block
+// RetrieveGenesis retrieves the genesis block
+func (br *BlockRepository) RetrieveGenesis() (*types.Block, error) {
+	return br.retrieveByWhereClause(whereClauseGenesisBlock)
+}
+
+// RetrieveLatest retrieves the latest block
 func (br *BlockRepository) RetrieveLatest() (*types.Block, error) {
+	return br.retrieveByWhereClause(whereClauseLatestBlock)
+}
+
+func (br *BlockRepository) retrieveByWhereClause(whereClause string) (*types.Block, error) {
 	rf := &recordFile{}
-	if br.dbClient.Where(fmt.Sprintf("consensus_start = (SELECT MAX(consensus_start) FROM %s)", rf.TableName())).Find(rf).RecordNotFound() {
+	if br.dbClient.Where(fmt.Sprintf(whereClause, rf.TableName())).Find(rf).RecordNotFound() {
 		return nil, errors.New("block not found")
 	}
 
@@ -103,7 +117,7 @@ func (br *BlockRepository) findRecordFileByHash(hash string) (*recordFile, error
 func (br *BlockRepository) constructParentRecordFile(rf *recordFile) (*recordFile, error) {
 	var parentRf = &recordFile{}
 	var err error
-	// Handle the egde case for querying first block
+	// Handle the edge case for querying first block
 	if rf.PrevHash == genesisPreviousHash {
 		parentRf = rf
 	} else {

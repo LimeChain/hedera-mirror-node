@@ -13,11 +13,14 @@ type Mirror struct {
 }
 
 type Rosetta struct {
-	Network string `yaml:"network"`
-	Db      Db     `yaml:"db"`
-	Port    string `yaml:"port"`
-	Shard   string `yaml:"shard"`
-	Realm   string `yaml:"realm"`
+	Network     string `yaml:"network"`
+	Db          Db     `yaml:"db"`
+	Port        string `yaml:"port"`
+	Shard       string `yaml:"shard"`
+	Realm       string `yaml:"realm"`
+	ApiVersion  string `yaml:"apiVersion"`
+	NodeVersion string `yaml:"nodeVersion"`
+	Version     string `yaml:"version"`
 }
 
 type Db struct {
