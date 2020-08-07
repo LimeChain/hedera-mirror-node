@@ -23,27 +23,26 @@ func (b *Block) FromRosettaBlock(rBlock *rTypes.Block) {
 	b.ParentHash = rBlock.ParentBlockIdentifier.Hash
 	b.ConsensusEnd = rBlock.Timestamp
 
-	tArray := make([]*Transaction, len(rBlock.Transactions))
+	transactions := make([]*Transaction, len(rBlock.Transactions))
 	for i, rosettaT := range rBlock.Transactions {
 		t := &Transaction{}
 		t.FromRosettaTransaction(rosettaT)
-		tArray[i] = t
+		transactions[i] = t
 	}
-	b.Transactions = tArray
+	b.Transactions = transactions
 }
 
 // ToRosettaBlock returns Rosetta type Block from the current domain type Block
 func (b *Block) ToRosettaBlock() *rTypes.Block {
-	tArray := make([]*rTypes.Transaction, len(b.Transactions))
+	transactions := make([]*rTypes.Transaction, len(b.Transactions))
 	for i, t := range b.Transactions {
-		tArray[i] = t.ToRosettaTransaction()
+		transactions[i] = t.ToRosettaTransaction()
 	}
-	rBlock := &rTypes.Block{
+
+	return &rTypes.Block{
 		BlockIdentifier:       &rTypes.BlockIdentifier{Index: b.ID, Hash: b.Hash},
 		ParentBlockIdentifier: &rTypes.BlockIdentifier{Index: b.ParentID, Hash: b.ParentHash},
 		Timestamp:             b.ConsensusEnd,
-		Transactions:          tArray,
+		Transactions:          transactions,
 	}
-
-	return rBlock
 }

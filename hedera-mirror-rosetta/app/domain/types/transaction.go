@@ -14,25 +14,25 @@ type Transaction struct {
 func (t *Transaction) FromRosettaTransaction(rTransaction *rTypes.Transaction) {
 	t.ID = rTransaction.TransactionIdentifier.Hash
 
-	oArray := make([]*Operation, len(rTransaction.Operations))
+	operations := make([]*Operation, len(rTransaction.Operations))
 	for i, rosettaO := range rTransaction.Operations {
 		o := &Operation{}
 		o.FromRosettaOperation(rosettaO)
-		oArray[i] = o
+		operations[i] = o
 	}
-	t.Operations = oArray
+	t.Operations = operations
 }
 
 // ToRosettaTransaction returns Rosetta type Transaction from the current domain type Transaction
 func (t *Transaction) ToRosettaTransaction() *rTypes.Transaction {
-	oArray := make([]*rTypes.Operation, len(t.Operations))
+	operations := make([]*rTypes.Operation, len(t.Operations))
 	for i, o := range t.Operations {
-		oArray[i] = o.ToRosettaOperation()
+		operations[i] = o.ToRosettaOperation()
 	}
 
 	rTransaction := &rTypes.Transaction{
 		TransactionIdentifier: &rTypes.TransactionIdentifier{Hash: t.ID},
-		Operations:            oArray,
+		Operations:            operations,
 	}
 	return rTransaction
 }
