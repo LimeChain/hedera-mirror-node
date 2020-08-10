@@ -1,14 +1,15 @@
 package repositories
 
 import (
+	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 )
 
 // BlockRepository Interface that all BlockRepository structs must implement
 type BlockRepository interface {
-	FindByIndex(index int64) (*types.Block, error)
-	FindByHash(hash string) (*types.Block, error)
-	FindByIdentifier(index int64, hash string) (*types.Block, error)
-	RetrieveGenesis() (*types.Block, error)
-	RetrieveLatest() (*types.Block, error)
+	FindByIndex(index int64) (*types.Block, *rTypes.Error)
+	FindByHash(hash string) (*types.Block, *rTypes.Error)
+	FindByIdentifier(index int64, hash string) (*types.Block, *rTypes.Error)
+	RetrieveGenesis() (*types.Block, *rTypes.Error)
+	RetrieveLatest() (*types.Block, *rTypes.Error)
 }
