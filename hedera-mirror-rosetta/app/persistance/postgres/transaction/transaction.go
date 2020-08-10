@@ -5,6 +5,7 @@ import (
 	"fmt"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/maphelper"
 
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/jinzhu/gorm"
@@ -101,14 +102,7 @@ func (tr *TransactionRepository) GetTypes() map[int]string {
 }
 
 func (tr *TransactionRepository) GetTypesAsArray() []string {
-	// TODO: Export as helper function
-	values := make([]string, 0, len(tr.types))
-
-	for _, v := range tr.types {
-		values = append(values, v)
-	}
-
-	return values
+	return maphelper.GetStringValuesFromIntStringMap(tr.types)
 }
 
 // GetStatuses returns map of all Transaction Statuses
