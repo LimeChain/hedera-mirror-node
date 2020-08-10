@@ -11,7 +11,7 @@ type Transaction struct {
 }
 
 // FromRosettaTransaction populates domain type Transaction from Rosetta type Transaction
-func FromRosettaTransaction(rTransaction *rTypes.Transaction) (*Transaction, error) {
+func FromRosettaTransaction(rTransaction *rTypes.Transaction) (*Transaction, *rTypes.Error) {
 	operations := make([]*Operation, len(rTransaction.Operations))
 	for i, rosettaO := range rTransaction.Operations {
 		o, err := FromRosettaOperation(rosettaO)

@@ -15,7 +15,7 @@ type Block struct {
 }
 
 // FromRosettaBlock populates domain type Block from Rosetta type Block
-func FromRosettaBlock(rBlock *rTypes.Block) (*Block, error) {
+func FromRosettaBlock(rBlock *rTypes.Block) (*Block, *rTypes.Error) {
 	transactions := make([]*Transaction, len(rBlock.Transactions))
 	for i, rosettaT := range rBlock.Transactions {
 		t, err := FromRosettaTransaction(rosettaT)
