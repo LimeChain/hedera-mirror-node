@@ -4,7 +4,7 @@ import "net/http"
 
 var Errors = map[string]Error{
 	BlockNotFound:        New(BlockNotFound, http.StatusBadRequest, true),
-	StartMustBeBeforeEnd: New(StartMustBeBeforeEnd, http.StatusBadRequest, true),
+	StartMustBeBeforeEnd: New(StartMustBeBeforeEnd, http.StatusBadRequest, false),
 }
 
 const (
@@ -13,6 +13,7 @@ const (
 )
 
 type Error interface {
+	Error() string
 	Message() string
 	StatusCode() int32
 	Retriable() bool
@@ -22,6 +23,10 @@ type errorStruct struct {
 	message    string
 	statusCode int32
 	retriable  bool
+}
+
+func (e *errorStruct) Error() string {
+	return e.message
 }
 
 func (e *errorStruct) Message() string {
