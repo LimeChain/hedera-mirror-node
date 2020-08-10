@@ -2,6 +2,7 @@ package block
 
 import (
 	"fmt"
+	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 	"github.com/jinzhu/gorm"
@@ -36,7 +37,7 @@ func NewBlockRepository(dbClient *gorm.DB) *BlockRepository {
 }
 
 // FindByIndex retrieves a block by given Index
-func (br *BlockRepository) FindByIndex(index int64) (*types.Block, errors.Error) {
+func (br *BlockRepository) FindByIndex(index int64) (*types.Block, *rTypes.Error) {
 	rf := &recordFile{}
 	if br.dbClient.Where(&recordFile{ConsensusStart: index}).Find(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
@@ -50,7 +51,7 @@ func (br *BlockRepository) FindByIndex(index int64) (*types.Block, errors.Error)
 }
 
 // FindByHash retrieves a block by a given Hash
-func (br *BlockRepository) FindByHash(hash string) (*types.Block, errors.Error) {
+func (br *BlockRepository) FindByHash(hash string) (*types.Block, *rTypes.Error) {
 	rf := &recordFile{}
 	if br.dbClient.Where(&recordFile{FileHash: hash}).Find(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
@@ -64,7 +65,7 @@ func (br *BlockRepository) FindByHash(hash string) (*types.Block, errors.Error) 
 }
 
 // FindByIndentifier retrivies a block by Index && Hash
-func (br *BlockRepository) FindByIndentifier(index int64, hash string) (*types.Block, errors.Error) {
+func (br *BlockRepository) FindByIndentifier(index int64, hash string) (*types.Block, *rTypes.Error) {
 	rf := &recordFile{}
 	if br.dbClient.Where(&recordFile{ConsensusStart: index, FileHash: hash}).Find(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
@@ -78,7 +79,7 @@ func (br *BlockRepository) FindByIndentifier(index int64, hash string) (*types.B
 }
 
 // RetrieveLatest retries the latest block
-func (br *BlockRepository) RetrieveLatest() (*types.Block, errors.Error) {
+func (br *BlockRepository) RetrieveLatest() (*types.Block, *rTypes.Error) {
 	rf := &recordFile{}
 	if br.dbClient.Where(fmt.Sprintf("consensus_start = (SELECT MAX(consensus_start) FROM %s)", rf.TableName())).Find(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
@@ -91,7 +92,7 @@ func (br *BlockRepository) RetrieveLatest() (*types.Block, errors.Error) {
 	return &types.Block{Hash: rf.FileHash, ParentIndex: parentRf.ConsensusStart, ParentHash: parentRf.FileHash, ConsensusStart: rf.ConsensusStart, ConsensusEnd: rf.ConsensusEnd}, nil
 }
 
-func (br *BlockRepository) findRecordFileByHash(hash string) (*recordFile, errors.Error) {
+func (br *BlockRepository) findRecordFileByHash(hash string) (*recordFile, *rTypes.Error) {
 	parentRf := &recordFile{}
 	if br.dbClient.Where(&recordFile{FileHash: hash}).Find(parentRf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
@@ -99,9 +100,9 @@ func (br *BlockRepository) findRecordFileByHash(hash string) (*recordFile, error
 	return parentRf, nil
 }
 
-func (br *BlockRepository) constructParentRecordFile(rf *recordFile) (*recordFile, errors.Error) {
+func (br *BlockRepository) constructParentRecordFile(rf *recordFile) (*recordFile, *rTypes.Error) {
 	var parentRf = &recordFile{}
-	var err errors.Error
+	var err *rTypes.Error
 	// Handle the egde case for querying first block
 	if rf.PrevHash == genesisPreviousHash {
 		parentRf = rf

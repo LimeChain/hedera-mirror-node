@@ -3,6 +3,7 @@ package transaction
 import (
 	"encoding/hex"
 	"fmt"
+	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
@@ -113,7 +114,7 @@ func (tr *TransactionRepository) FindByTimestamp(timestamp int64) *types.Transac
 }
 
 // FindBetween retrieves all Transactions between the provided start and end timestamp
-func (tr *TransactionRepository) FindBetween(start int64, end int64) ([]*types.Transaction, errors.Error) {
+func (tr *TransactionRepository) FindBetween(start int64, end int64) ([]*types.Transaction, *rTypes.Error) {
 	if start > end {
 		return nil, errors.Errors[errors.StartMustBeBeforeEnd]
 	}
