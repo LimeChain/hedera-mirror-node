@@ -61,6 +61,13 @@ func (s *BlockAPIService) BlockTransaction(
 	request *rTypes.BlockTransactionRequest,
 ) (*rTypes.BlockTransactionResponse, *rTypes.Error) {
 
-	// TODO
-	return &rTypes.BlockTransactionResponse{}, nil
+	transaction, err := s.transactionRepo.FindByIdentifier(request.TransactionIdentifier.Hash)
+	if err != nil {
+		return nil, err
+	}
+
+	rTransaction := transaction.ToRosettaTransaction()
+	return &rTypes.BlockTransactionResponse{
+		Transaction: rTransaction,
+	}, nil
 }

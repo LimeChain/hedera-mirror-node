@@ -2,11 +2,13 @@ package transaction
 
 import (
 	"fmt"
+	"log"
+	"strconv"
+	"strings"
 
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
-	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
-
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 	"github.com/jinzhu/gorm"
 )
 
@@ -64,12 +66,41 @@ func (transactionStatus) TableName() string {
 }
 
 // The current format used is {payer-ID}-{valid_start_seconds}-{valid_start_nanos}-{node-ID}
-func (t *transaction) constructID() string {
+func (t *transaction) constructIdentifier() string {
 	payerID := constructAccount(t.PayerAccountID)
 	nodeID := constructAccount(t.NodeAccountID)
 	formattedTime := float64(t.ValidStartNS) / float64(1e9)
 
 	return fmt.Sprintf("%s-%.9f-%s", payerID.FormatToString(), formattedTime, nodeID.FormatToString())
+}
+
+// Populates transaction struct from a given Identifier
+func newTransactionFromIdentifier(identifier string) (*transaction, *rTypes.Error) {
+	inputs := strings.Split(identifier, "-")
+	if len(inputs) != 3 {
+		return nil, errors.Errors[errors.InvalidTransactionIdentifier]
+	}
+
+	payerID, err := types.AccountFromString(inputs[0])
+	nodeID, err1 := types.AccountFromString(inputs[2])
+
+	var err2, err3 error
+	t := transaction{}
+	t.PayerAccountID, err2 = payerID.ComputeEncodedID()
+	t.NodeAccountID, err3 = nodeID.ComputeEncodedID()
+
+	if err != nil || err1 != nil || err2 != nil || err3 != nil {
+		return nil, errors.Errors[errors.InvalidTransactionIdentifier]
+	}
+
+	validStart, err4 := strconv.ParseFloat(inputs[1], 64)
+	if err4 != nil {
+		return nil, errors.Errors[errors.InvalidTransactionIdentifier]
+	}
+
+	t.ValidStartNS = int64(validStart * float64(1e9))
+	log.Println(t)
+	return &t, nil
 }
 
 // TransactionRepository struct that has connection to the Database
@@ -100,13 +131,13 @@ func NewTransactionRepository(dbClient *gorm.DB) *TransactionRepository {
 	return tr
 }
 
-// GetTypes returns map of all Transaction Types
-func (tr *TransactionRepository) GetTypes() map[int]string {
+// Types returns map of all Transaction Types
+func (tr *TransactionRepository) Types() map[int]string {
 	return tr.types
 }
 
-// GetStatuses returns map of all Transaction Statuses
-func (tr *TransactionRepository) GetStatuses() map[int]string {
+// Statuses returns map of all Transaction Statuses
+func (tr *TransactionRepository) Statuses() map[int]string {
 	return tr.statuses
 }
 
@@ -114,8 +145,7 @@ func (tr *TransactionRepository) GetStatuses() map[int]string {
 func (tr *TransactionRepository) FindByTimestamp(timestamp int64) *types.Transaction {
 	t := transaction{}
 	tr.dbClient.Find(&t, timestamp)
-	tResult := tr.constructTransaction(t)
-	return tResult
+	return tr.constructTransaction(t)
 }
 
 // FindBetween retrieves all Transactions between the provided start and end timestamp
@@ -131,6 +161,15 @@ func (tr *TransactionRepository) FindBetween(start int64, end int64) ([]*types.T
 		res[i] = tr.constructTransaction(t)
 	}
 	return res, nil
+}
+
+// FindByIdentifier retrieves a transaction by Identifier
+func (tr *TransactionRepository) FindByIdentifier(identifier string) (*types.Transaction, *rTypes.Error) {
+	t := transaction{}
+	if tr.dbClient.Where(newTransactionFromIdentifier(identifier)).Find(&t).RecordNotFound() {
+		return nil, errors.Errors[errors.TransactionNotFound]
+	}
+	return tr.constructTransaction(t), nil
 }
 
 func (tr *TransactionRepository) findCryptoTransfers(timestamp int64) []cryptoTransfer {
@@ -152,7 +191,7 @@ func (tr *TransactionRepository) retrieveTransactionStatuses() []transactionStat
 }
 
 func (tr *TransactionRepository) constructTransaction(t transaction) *types.Transaction {
-	tResult := &types.Transaction{ID: t.constructID()}
+	tResult := &types.Transaction{ID: t.constructIdentifier()}
 
 	ctArray := tr.findCryptoTransfers(t.ConsensusNS)
 	oArray := tr.constructOperations(ctArray, tr.types[t.Type], tr.statuses[t.Result])
