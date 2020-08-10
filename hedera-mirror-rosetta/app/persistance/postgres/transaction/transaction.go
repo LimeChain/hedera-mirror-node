@@ -2,8 +2,7 @@ package transaction
 
 import (
 	"fmt"
-	"log"
-	"strconv"
+	"math/big"
 	"strings"
 
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
@@ -69,8 +68,9 @@ func (transactionStatus) TableName() string {
 func (t *transaction) constructIdentifier() string {
 	payerID := constructAccount(t.PayerAccountID)
 	nodeID := constructAccount(t.NodeAccountID)
-	formattedTime := float64(t.ValidStartNS) / float64(1e9)
 
+	validStartBn, tenToNinthBn := new(big.Float).SetInt(big.NewInt(t.ValidStartNS)), big.NewFloat(1e9)
+	formattedTime := validStartBn.Quo(validStartBn, tenToNinthBn)
 	return fmt.Sprintf("%s-%.9f-%s", payerID.FormatToString(), formattedTime, nodeID.FormatToString())
 }
 
@@ -93,13 +93,12 @@ func newTransactionFromIdentifier(identifier string) (*transaction, *rTypes.Erro
 		return nil, errors.Errors[errors.InvalidTransactionIdentifier]
 	}
 
-	validStart, err4 := strconv.ParseFloat(inputs[1], 64)
+	validStart, _, err4 := new(big.Float).Parse(inputs[1], 10)
 	if err4 != nil {
 		return nil, errors.Errors[errors.InvalidTransactionIdentifier]
 	}
 
-	t.ValidStartNS = int64(validStart * float64(1e9))
-	log.Println(t)
+	t.ValidStartNS, _ = validStart.Mul(validStart, big.NewFloat(1e9)).Int64()
 	return &t, nil
 }
 
@@ -166,7 +165,11 @@ func (tr *TransactionRepository) FindBetween(start int64, end int64) ([]*types.T
 // FindByIdentifier retrieves a transaction by Identifier
 func (tr *TransactionRepository) FindByIdentifier(identifier string) (*types.Transaction, *rTypes.Error) {
 	t := transaction{}
-	if tr.dbClient.Where(newTransactionFromIdentifier(identifier)).Find(&t).RecordNotFound() {
+	queryT, err := newTransactionFromIdentifier(identifier)
+	if err != nil {
+		return nil, err
+	}
+	if tr.dbClient.Where(queryT).Find(&t).RecordNotFound() {
 		return nil, errors.Errors[errors.TransactionNotFound]
 	}
 	return tr.constructTransaction(t), nil
