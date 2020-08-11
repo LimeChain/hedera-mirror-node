@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistance/postgres/account"
 	"log"
 	"net/http"
 	"strings"
@@ -20,17 +21,23 @@ import (
 func NewBlockchainRouter(network *types.NetworkIdentifier, asserter *asserter.Asserter, version *types.Version, dbClient *gorm.DB) http.Handler {
 	blockRepo := block.NewBlockRepository(dbClient)
 	transactionRepo := transaction.NewTransactionRepository(dbClient)
+	accountRepo := account.NewAccountRepository(dbClient)
+
+	commons := services.NewCommons(blockRepo)
 
 	networkAPIService := services.NewNetworkAPIService(network, version, blockRepo, transactionRepo)
 	networkAPIController := server.NewNetworkAPIController(networkAPIService, asserter)
 
-	blockAPIService := services.NewBlockAPIService(network, blockRepo, transactionRepo)
+	blockAPIService := services.NewBlockAPIService(commons, transactionRepo)
 	blockAPIController := server.NewBlockAPIController(blockAPIService, asserter)
 
 	mempoolAPIService := services.NewMempoolAPIService()
 	mempoolAPIController := server.NewMempoolAPIController(mempoolAPIService, asserter)
 
-	return server.NewRouter(networkAPIController, blockAPIController, mempoolAPIController)
+	accountAPIService := services.NewAccountAPIService(commons, accountRepo)
+	accountAPIController := server.NewAccountAPIController(accountAPIService, asserter)
+
+	return server.NewRouter(networkAPIController, blockAPIController, mempoolAPIController, accountAPIController)
 }
 
 func main() {
@@ -55,7 +62,7 @@ func main() {
 
 	asserter, err := asserter.NewServer(
 		[]string{"Transfer"},
-		false,
+		true,
 		[]*types.NetworkIdentifier{network},
 	)
 	if err != nil {

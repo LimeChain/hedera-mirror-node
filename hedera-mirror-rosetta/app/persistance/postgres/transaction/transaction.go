@@ -225,7 +225,7 @@ func (tr *TransactionRepository) constructOperations(ctArray []cryptoTransfer, t
 	oArray := make([]*types.Operation, len(ctArray))
 	for i, ct := range ctArray {
 		a := constructAccount(ct.EntityID)
-		oArray[i] = &types.Operation{Index: int64(i), Type: transactionType, Status: transactionStatus, Account: a, Amount: ct.Amount}
+		oArray[i] = &types.Operation{Index: int64(i), Type: transactionType, Status: transactionStatus, Account: a, Amount: &types.Amount{Value: ct.Amount}}
 	}
 	return oArray
 }

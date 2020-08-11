@@ -10,6 +10,7 @@ import (
 var Errors = map[string]*types.Error{
 	BlockNotFound:                New(BlockNotFound, http.StatusNotFound, true),
 	TransactionNotFound:          New(TransactionNotFound, http.StatusNotFound, true),
+	AccountNotFound:              New(AccountNotFound, http.StatusNotFound, true),
 	StartMustBeBeforeEnd:         New(StartMustBeBeforeEnd, http.StatusBadRequest, false),
 	InvalidAccount:               New(InvalidAccount, http.StatusBadRequest, false),
 	InvalidAmount:                New(InvalidAmount, http.StatusBadRequest, false),
@@ -19,6 +20,7 @@ var Errors = map[string]*types.Error{
 const (
 	BlockNotFound                string = "Block not found"
 	TransactionNotFound          string = "Transaction not found"
+	AccountNotFound              string = "Account not found"
 	StartMustBeBeforeEnd         string = "Start must be before end"
 	InvalidAccount               string = "Invalid Account provided"
 	InvalidAmount                string = "Invalid Amount provided"
