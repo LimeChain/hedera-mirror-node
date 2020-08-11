@@ -11,6 +11,10 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+const (
+	whereClauseBetweenConsensus string = "consensus_ns >= ? AND consensus_ns <= ?"
+)
+
 type transaction struct {
 	ConsensusNS          int64  `gorm:"type:bigint;primary_key"`
 	Type                 int    `gorm:"type:smallint"`
@@ -153,7 +157,7 @@ func (tr *TransactionRepository) FindBetween(start int64, end int64) ([]*types.T
 		return nil, errors.Errors[errors.StartMustBeBeforeEnd]
 	}
 	tArray := []transaction{}
-	tr.dbClient.Where("consensus_ns >= ? AND consensus_ns <= ?", start, end).Find(&tArray)
+	tr.dbClient.Where(whereClauseBetweenConsensus, start, end).Find(&tArray)
 
 	res := make([]*types.Transaction, len(tArray))
 	for i, t := range tArray {
@@ -163,13 +167,13 @@ func (tr *TransactionRepository) FindBetween(start int64, end int64) ([]*types.T
 }
 
 // FindByIdentifier retrieves a transaction by Identifier
-func (tr *TransactionRepository) FindByIdentifier(identifier string) (*types.Transaction, *rTypes.Error) {
+func (tr *TransactionRepository) FindByIdentifierInBlock(identifier string, consensusStart int64, consensusEnd int64) (*types.Transaction, *rTypes.Error) {
 	t := transaction{}
 	queryT, err := newTransactionFromIdentifier(identifier)
 	if err != nil {
 		return nil, err
 	}
-	if tr.dbClient.Where(queryT).Find(&t).RecordNotFound() {
+	if tr.dbClient.Where(whereClauseBetweenConsensus, consensusStart, consensusEnd).Where(queryT).Find(&t).RecordNotFound() {
 		return nil, errors.Errors[errors.TransactionNotFound]
 	}
 	return tr.constructTransaction(t), nil
@@ -182,13 +186,13 @@ func (tr *TransactionRepository) findCryptoTransfers(timestamp int64) []cryptoTr
 }
 
 func (tr *TransactionRepository) retrieveTransactionTypes() []transactionType {
-	types := []transactionType{}
-	tr.dbClient.Find(&types)
-	return types
+	var transactionTypes []transactionType
+	tr.dbClient.Find(&transactionTypes)
+	return transactionTypes
 }
 
 func (tr *TransactionRepository) retrieveTransactionStatuses() []transactionStatus {
-	statuses := []transactionStatus{}
+	var statuses []transactionStatus
 	tr.dbClient.Find(&statuses)
 	return statuses
 }

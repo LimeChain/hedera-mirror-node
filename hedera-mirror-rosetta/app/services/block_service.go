@@ -60,8 +60,12 @@ func (s *BlockAPIService) BlockTransaction(
 	ctx context.Context,
 	request *rTypes.BlockTransactionRequest,
 ) (*rTypes.BlockTransactionResponse, *rTypes.Error) {
+	block, err := s.blockRepo.FindByIndentifier(request.BlockIdentifier.Index, request.BlockIdentifier.Hash)
+	if err != nil {
+		return nil, err
+	}
 
-	transaction, err := s.transactionRepo.FindByIdentifier(request.TransactionIdentifier.Hash)
+	transaction, err := s.transactionRepo.FindByIdentifierInBlock(request.TransactionIdentifier.Hash, block.ConsensusStart, block.ConsensusEnd)
 	if err != nil {
 		return nil, err
 	}
