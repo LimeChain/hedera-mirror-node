@@ -11,8 +11,7 @@ import (
 const genesisPreviousHash = "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 
 const (
-	whereClauseGenesisBlock string = "consensus_start = (SELECT MIN(consensus_start) FROM %s)"
-	whereClauseLatestBlock  string = "consensus_start = (SELECT MAX(consensus_start) FROM %s)"
+	whereClauseLatestBlock string = "consensus_start = (SELECT MAX(consensus_start) FROM %s)"
 )
 
 type recordFile struct {
@@ -85,7 +84,16 @@ func (br *BlockRepository) FindByIdentifier(index int64, hash string) (*types.Bl
 
 // RetrieveGenesis retrieves the genesis block
 func (br *BlockRepository) RetrieveGenesis() (*types.Block, *rTypes.Error) {
-	return br.retrieveByWhereClause(whereClauseGenesisBlock)
+	rf := &recordFile{}
+	if br.dbClient.Where(&recordFile{PrevHash: genesisPreviousHash}).Find(rf).RecordNotFound() {
+		return nil, errors.Errors[errors.BlockNotFound]
+	}
+
+	return &types.Block{
+		Hash:           rf.FileHash,
+		ConsensusStart: rf.ConsensusStart,
+		ConsensusEnd:   rf.ConsensusEnd,
+	}, nil
 }
 
 // RetrieveLatest retrieves the latest block
