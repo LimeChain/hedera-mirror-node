@@ -1,7 +1,6 @@
 package hex
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -14,7 +13,7 @@ func SafeAddHexPrefix(string string) string {
 	if strings.HasPrefix(string, hexPrefix) {
 		return string
 	}
-	return fmt.Sprintf("0x%s", string)
+	return hexPrefix + string
 }
 
 // SafeRemoveHexPrefix - removes 0x prefix from a string if it has one
