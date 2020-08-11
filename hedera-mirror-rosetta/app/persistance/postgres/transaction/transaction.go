@@ -88,19 +88,27 @@ func newTransactionFromIdentifier(identifier string) (*transaction, *rTypes.Erro
 	}
 
 	payerID, err := types.AccountFromString(inputs[0])
-	nodeID, err1 := types.AccountFromString(inputs[2])
-
-	var err2, err3 error
-	t := transaction{}
-	t.PayerAccountID, err2 = payerID.ComputeEncodedID()
-	t.NodeAccountID, err3 = nodeID.ComputeEncodedID()
-
-	if err != nil || err1 != nil || err2 != nil || err3 != nil {
+	if err != nil {
+		return nil, errors.Errors[errors.InvalidTransactionIdentifier]
+	}
+	nodeID, err := types.AccountFromString(inputs[2])
+	if err != nil {
 		return nil, errors.Errors[errors.InvalidTransactionIdentifier]
 	}
 
-	validStart, _, err4 := new(big.Float).Parse(inputs[1], 10)
-	if err4 != nil {
+	var err1 error
+	t := transaction{}
+	t.PayerAccountID, err1 = payerID.ComputeEncodedID()
+	if err1 != nil {
+		return nil, errors.Errors[errors.InvalidTransactionIdentifier]
+	}
+	t.NodeAccountID, err1 = nodeID.ComputeEncodedID()
+	if err1 != nil {
+		return nil, errors.Errors[errors.InvalidTransactionIdentifier]
+	}
+
+	validStart, _, err1 := new(big.Float).Parse(inputs[1], 10)
+	if err1 != nil {
 		return nil, errors.Errors[errors.InvalidTransactionIdentifier]
 	}
 

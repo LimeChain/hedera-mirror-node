@@ -61,9 +61,15 @@ func AccountFromString(account string) (*Account, *rTypes.Error) {
 	}
 
 	shard, err := strconv.Atoi(inputs[0])
-	realm, err1 := strconv.Atoi(inputs[1])
-	number, err2 := strconv.Atoi(inputs[2])
-	if err != nil || err1 != nil || err2 != nil {
+	if err != nil {
+		return nil, errors.Errors[errors.InvalidAccount]
+	}
+	realm, err := strconv.Atoi(inputs[1])
+	if err != nil {
+		return nil, errors.Errors[errors.InvalidAccount]
+	}
+	number, err := strconv.Atoi(inputs[2])
+	if err != nil {
 		return nil, errors.Errors[errors.InvalidAccount]
 	}
 
