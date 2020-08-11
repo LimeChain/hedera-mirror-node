@@ -27,7 +27,7 @@ func (n NetworkService) NetworkList(ctx context.Context, request *types.Metadata
 
 func (n NetworkService) NetworkOptions(ctx context.Context, request *types.NetworkRequest) (*types.NetworkOptionsResponse, *types.Error) {
 	// TODO: Remove after migration has been added
-	statuses := maphelper.GetStringValuesFromIntStringMap(n.transactionRepo.GetStatuses())
+	statuses := maphelper.GetStringValuesFromIntStringMap(n.transactionRepo.Statuses())
 	operationStatuses := make([]*types.OperationStatus, 0, len(statuses))
 
 	for _, v := range statuses {
@@ -41,7 +41,7 @@ func (n NetworkService) NetworkOptions(ctx context.Context, request *types.Netwo
 		Version: n.version,
 		Allow: &types.Allow{
 			OperationStatuses:       operationStatuses,
-			OperationTypes:          n.transactionRepo.GetTypesAsArray(),
+			OperationTypes:          n.transactionRepo.TypesAsArray(),
 			Errors:                  maphelper.GetErrorValuesFromStringErrorMap(errors.Errors),
 			HistoricalBalanceLookup: false,
 		},

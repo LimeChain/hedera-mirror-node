@@ -60,7 +60,7 @@ func (s *BlockAPIService) BlockTransaction(
 	ctx context.Context,
 	request *rTypes.BlockTransactionRequest,
 ) (*rTypes.BlockTransactionResponse, *rTypes.Error) {
-	block, err := s.blockRepo.FindByIndentifier(request.BlockIdentifier.Index, request.BlockIdentifier.Hash)
+	block, err := s.blockRepo.FindByIdentifier(request.BlockIdentifier.Index, request.BlockIdentifier.Hash)
 	if err != nil {
 		return nil, err
 	}

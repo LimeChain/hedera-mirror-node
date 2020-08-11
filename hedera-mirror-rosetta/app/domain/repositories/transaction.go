@@ -11,7 +11,6 @@ type TransactionRepository interface {
 	FindByTimestamp(timestamp int64) *types.Transaction
 	FindBetween(start int64, end int64) ([]*types.Transaction, *rTypes.Error)
 	Types() map[int]string
-    GetTypesAsArray() []string
+	TypesAsArray() []string
 	Statuses() map[int]string
-
 }

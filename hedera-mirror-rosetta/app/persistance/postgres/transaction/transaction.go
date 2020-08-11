@@ -146,8 +146,8 @@ func (tr *TransactionRepository) Statuses() map[int]string {
 	return tr.statuses
 }
 
-func (tr *TransactionRepository) GetTypesAsArray() []string {
-    return maphelper.GetStringValuesFromIntStringMap(tr.types)
+func (tr *TransactionRepository) TypesAsArray() []string {
+	return maphelper.GetStringValuesFromIntStringMap(tr.types)
 }
 
 // FindByTimestamp retrieves Transaction by given timestamp
