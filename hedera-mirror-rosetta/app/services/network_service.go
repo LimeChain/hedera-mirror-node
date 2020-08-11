@@ -62,12 +62,12 @@ func (n NetworkService) NetworkStatus(ctx context.Context, request *types.Networ
 	return &types.NetworkStatusResponse{
 		CurrentBlockIdentifier: &types.BlockIdentifier{
 			Index: latestBlock.ConsensusStart,
-			Hash:  hex.FormatHex(latestBlock.Hash),
+			Hash:  hex.SafeAddHexPrefix(latestBlock.Hash),
 		},
 		CurrentBlockTimestamp: latestBlock.ConsensusStart,
 		GenesisBlockIdentifier: &types.BlockIdentifier{
 			Index: genesisBlock.ConsensusStart,
-			Hash:  hex.FormatHex(genesisBlock.Hash),
+			Hash:  hex.SafeAddHexPrefix(genesisBlock.Hash),
 		},
 		// TODO: Add after migration has been added
 		Peers: nil,
