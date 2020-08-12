@@ -11,6 +11,7 @@ import (
 	hexutils "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/hex"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/validator"
 	"github.com/hashgraph/hedera-sdk-go"
+	"golang.org/x/crypto/sha3"
 	"strconv"
 )
 
@@ -40,7 +41,18 @@ func (c *ConstructionService) ConstructionDerive(ctx context.Context, request *r
 }
 
 func (c *ConstructionService) ConstructionHash(ctx context.Context, request *rTypes.ConstructionHashRequest) (*rTypes.TransactionIdentifierResponse, *rTypes.Error) {
-	panic("implement me")
+	bytesTransaction, err := hex.DecodeString(request.SignedTransaction)
+	if err != nil {
+		return nil, errors.Errors[errors.TransactionDecodeFailed]
+	}
+	digest := sha3.Sum384(bytesTransaction)
+
+	return &rTypes.TransactionIdentifierResponse{
+		TransactionIdentifier: &rTypes.TransactionIdentifier{
+			Hash: hexutils.SafeAddHexPrefix(hex.EncodeToString(digest[:])),
+		},
+		Metadata: nil,
+	}, nil
 }
 
 func (c *ConstructionService) ConstructionMetadata(ctx context.Context, request *rTypes.ConstructionMetadataRequest) (*rTypes.ConstructionMetadataResponse, *rTypes.Error) {
