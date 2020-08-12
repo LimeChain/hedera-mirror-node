@@ -167,7 +167,9 @@ func (c *ConstructionService) handleCryptoCreateAccountPreProcess(operations []*
 		return nil, errors.Errors[errors.InvalidOperationsAmount]
 	}
 
-	return &rTypes.ConstructionPreprocessResponse{}, nil
+	return &rTypes.ConstructionPreprocessResponse{
+		Options: make(map[string]interface{}),
+	}, nil
 }
 
 func (c *ConstructionService) handleCryptoTransferPreProcess(operations []*rTypes.Operation) (*rTypes.ConstructionPreprocessResponse, *rTypes.Error) {
