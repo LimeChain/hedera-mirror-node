@@ -93,7 +93,35 @@ func (c *ConstructionService) ConstructionPreprocess(ctx context.Context, reques
 }
 
 func (c *ConstructionService) ConstructionSubmit(ctx context.Context, request *rTypes.ConstructionSubmitRequest) (*rTypes.TransactionIdentifierResponse, *rTypes.Error) {
-	panic("implement me")
+	request.SignedTransaction = hexutils.SafeRemoveHexPrefix(request.SignedTransaction)
+	bytesTransaction, err := hex.DecodeString(request.SignedTransaction)
+	if err != nil {
+		return nil, errors.Errors[errors.TransactionDecodeFailed]
+	}
+
+	var transaction hedera.Transaction
+
+	err = transaction.UnmarshalBinary(bytesTransaction)
+	if err != nil {
+		return nil, errors.Errors[errors.TransactionUnmarshallingFailed]
+	}
+
+	transactionId, err := transaction.Execute(c.hederaClient)
+	if err != nil {
+		return nil, errors.Errors[errors.TransactionSubmissionFailed]
+	}
+
+	transactionRecord, err := transactionId.GetRecord(c.hederaClient)
+	if err != nil {
+		return nil, errors.Errors[errors.TransactionRecordFetchFailed]
+	}
+
+	return &rTypes.TransactionIdentifierResponse{
+		TransactionIdentifier: &rTypes.TransactionIdentifier{
+			Hash: hexutils.SafeAddHexPrefix(hex.EncodeToString(transactionRecord.TransactionHash)),
+		},
+		Metadata: nil,
+	}, nil
 }
 
 func (c *ConstructionService) handleCryptoCreateAccountPayload(operations []*rTypes.Operation) (*rTypes.ConstructionPayloadsResponse, *rTypes.Error) {

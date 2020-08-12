@@ -11,8 +11,10 @@ var Errors = map[string]*types.Error{
 	BlockNotFound:                  New(BlockNotFound, http.StatusNotFound, true),
 	TransactionBuildFailed:         New(TransactionBuildFailed, http.StatusBadRequest, false),
 	TransactionDecodeFailed:        New(TransactionDecodeFailed, http.StatusBadRequest, false),
+	TransactionRecordFetchFailed:   New(TransactionRecordFetchFailed, http.StatusBadRequest, false),
 	TransactionMarshallingFailed:   New(TransactionMarshallingFailed, http.StatusBadRequest, false),
 	TransactionUnmarshallingFailed: New(TransactionUnmarshallingFailed, http.StatusBadRequest, false),
+	TransactionSubmissionFailed:    New(TransactionSubmissionFailed, http.StatusBadRequest, false),
 	TransactionNotFound:            New(TransactionNotFound, http.StatusNotFound, true),
 	MultipleOperationTypesPresent:  New(MultipleOperationTypesPresent, http.StatusBadRequest, false),
 	MultipleSignaturesPresent:      New(MultipleSignaturesPresent, http.StatusBadRequest, false),
@@ -30,8 +32,10 @@ const (
 	BlockNotFound                  string = "Block not found"
 	TransactionBuildFailed         string = "Transaction build failed"
 	TransactionDecodeFailed        string = "Transaction Decode failed"
+	TransactionRecordFetchFailed   string = "Transaction record fetch failed"
 	TransactionMarshallingFailed   string = "Transaction marshalling failed"
 	TransactionUnmarshallingFailed string = "Transaction unmarshalling failed"
+	TransactionSubmissionFailed    string = "Transaction submission failed"
 	TransactionNotFound            string = "Transaction not found"
 	MultipleOperationTypesPresent  string = "Only one Operation Type must be present"
 	MultipleSignaturesPresent      string = "Only one signature must be present"
