@@ -5,6 +5,7 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/asserter"
 	"github.com/coinbase/rosetta-sdk-go/server"
 	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistance/postgres/account"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistance/postgres/block"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistance/postgres/transaction"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/services"
@@ -36,8 +37,8 @@ func NewBlockchainRouter(network *types.NetworkIdentifier, asserter *asserter.As
 	constructionAPIService := services.NewConstructionAPIService()
 	constructionAPIController := server.NewConstructionAPIController(constructionAPIService, asserter)
 
-    accountAPIService := services.NewAccountAPIService(commons, accountRepo)
-    accountAPIController := server.NewAccountAPIController(accountAPIService, asserter)
+	accountAPIService := services.NewAccountAPIService(commons, accountRepo)
+	accountAPIController := server.NewAccountAPIController(accountAPIService, asserter)
 
 	return server.NewRouter(networkAPIController, blockAPIController, mempoolAPIController, constructionAPIController, accountAPIController)
 }
