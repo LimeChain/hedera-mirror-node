@@ -38,7 +38,7 @@ func (c *ConstructionService) ConstructionParse(ctx context.Context, request *rT
 }
 
 func (c *ConstructionService) ConstructionPayloads(ctx context.Context, request *rTypes.ConstructionPayloadsRequest) (*rTypes.ConstructionPayloadsResponse, *rTypes.Error) {
-	operationType, err := validator.ValidateOperations(request.Operations)
+	operationType, err := validator.ValidateOperationsTypes(request.Operations)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,17 @@ func (c *ConstructionService) ConstructionPayloads(ctx context.Context, request 
 	}
 }
 func (c *ConstructionService) ConstructionPreprocess(ctx context.Context, request *rTypes.ConstructionPreprocessRequest) (*rTypes.ConstructionPreprocessResponse, *rTypes.Error) {
-	return &rTypes.ConstructionPreprocessResponse{}, nil
+	operationType, err := validator.ValidateOperationsTypes(request.Operations)
+	if err != nil {
+		return nil, err
+	}
+
+	switch *operationType {
+	case config.OperationTypeCryptoTransfer:
+		return c.handleCryptoTransferPreProcess(request.Operations)
+	default:
+		return c.handleCryptoCreateAccountPreProcess(request.Operations)
+	}
 }
 
 func (c *ConstructionService) ConstructionSubmit(ctx context.Context, request *rTypes.ConstructionSubmitRequest) (*rTypes.TransactionIdentifierResponse, *rTypes.Error) {
@@ -100,6 +110,11 @@ func (c *ConstructionService) handleCryptoCreateAccountPayload(operations []*rTy
 }
 
 func (c *ConstructionService) handleCryptoTransferPayload(operations []*rTypes.Operation) (*rTypes.ConstructionPayloadsResponse, *rTypes.Error) {
+	err1 := validator.ValidateOperationsSum(operations)
+	if err1 != nil {
+		return nil, err1
+	}
+
 	builderTransaction := hedera.NewCryptoTransferTransaction()
 	var sender hedera.AccountID
 
@@ -142,6 +157,24 @@ func (c *ConstructionService) handleCryptoTransferPayload(operations []*rTypes.O
 			Bytes:   bytesTransaction,
 		}},
 	}, nil
+}
+
+func (c *ConstructionService) handleCryptoCreateAccountPreProcess(operations []*rTypes.Operation) (*rTypes.ConstructionPreprocessResponse, *rTypes.Error) {
+	operationsLength := len(operations)
+	if operationsLength != 1 {
+		return nil, errors.Errors[errors.InvalidOperationsAmount]
+	}
+
+	return &rTypes.ConstructionPreprocessResponse{}, nil
+}
+
+func (c *ConstructionService) handleCryptoTransferPreProcess(operations []*rTypes.Operation) (*rTypes.ConstructionPreprocessResponse, *rTypes.Error) {
+	err1 := validator.ValidateOperationsSum(operations)
+	if err1 != nil {
+		return nil, err1
+	}
+
+	return &rTypes.ConstructionPreprocessResponse{}, nil
 }
 
 func NewConstructionAPIService() server.ConstructionAPIServicer {
