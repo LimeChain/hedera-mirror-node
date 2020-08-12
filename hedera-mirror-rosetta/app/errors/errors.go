@@ -14,7 +14,7 @@ var Errors = map[string]*types.Error{
 	TransactionMarshallingFailed:   New(TransactionMarshallingFailed, http.StatusBadRequest, false),
 	TransactionUnmarshallingFailed: New(TransactionUnmarshallingFailed, http.StatusBadRequest, false),
 	TransactionNotFound:            New(TransactionNotFound, http.StatusNotFound, true),
-	MultipleOperationTypesPresent:  New(OnlyOneOperationTypePresent, http.StatusBadRequest, false),
+	MultipleOperationTypesPresent:  New(MultipleOperationTypesPresent, http.StatusBadRequest, false),
 	StartMustBeBeforeEnd:           New(StartMustBeBeforeEnd, http.StatusBadRequest, false),
 	InvalidAccount:                 New(InvalidAccount, http.StatusBadRequest, false),
 	InvalidAmount:                  New(InvalidAmount, http.StatusBadRequest, false),
