@@ -3,10 +3,8 @@ package services
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 	"github.com/coinbase/rosetta-sdk-go/server"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
-	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/config"
 	hederatools "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/hedera"
@@ -68,38 +66,36 @@ func (c *ConstructionService) handleCryptoCreateAccountPayload(operations []*rTy
 	}
 
 	operation := operations[0]
-	account, err := types.FromRosettaAccount(operation.Account)
+	sender, err := hedera.AccountIDFromString(operation.Account.Address)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errors[errors.InvalidAccount]
 	}
 
-	amount, err1 := strconv.Atoi(operation.Amount.Value)
-	if err1 != nil {
+	amount, err := strconv.Atoi(operation.Amount.Value)
+	if err != nil {
 		return nil, errors.Errors[errors.InvalidAmount]
 	}
 
-	transaction, err1 := hedera.
+	transaction, err := hedera.
 		NewAccountCreateTransaction().
 		SetInitialBalance(hederatools.ToHbarAmount(int64(amount))).
-		SetTransactionID(hederatools.TransactionId(hederatools.ToHederaAccountId(account))).
+		SetTransactionID(hederatools.TransactionId(sender)).
 		Build(c.hederaClient)
 
-	if err1 != nil {
-		fmt.Println(err1)
+	if err != nil {
 		return nil, errors.Errors[errors.TransactionBuildFailed]
 	}
 
-	bytesTransaction, err1 := transaction.MarshalBinary()
-	if err1 != nil {
+	bytesTransaction, err := transaction.MarshalBinary()
+	if err != nil {
 		return nil, errors.Errors[errors.TransactionMarshallingFailed]
 	}
 
 	return &rTypes.ConstructionPayloadsResponse{
 		UnsignedTransaction: hexutils.SafeAddHexPrefix(hex.EncodeToString(bytesTransaction)),
 		Payloads: []*rTypes.SigningPayload{{
-			Address:       fmt.Sprintf("%d.%d.%d", account.Shard, account.Realm, account.Number),
-			Bytes:         bytesTransaction,
-			SignatureType: "",
+			Address: sender.String(),
+			Bytes:   bytesTransaction,
 		}},
 	}, nil
 }
@@ -109,27 +105,23 @@ func (c *ConstructionService) handleCryptoTransferPayload(operations []*rTypes.O
 	var sender hedera.AccountID
 
 	for _, operation := range operations {
-		acc, err := types.FromRosettaAccount(operation.Account)
+		account, err := hedera.AccountIDFromString(operation.Account.Address)
 		if err != nil {
-			return nil, err
+			return nil, errors.Errors[errors.InvalidAccount]
 		}
 
-		amount, err1 := strconv.Atoi(operation.Amount.Value)
-		if err1 != nil {
+		amount, err := strconv.Atoi(operation.Amount.Value)
+		if err != nil {
 			return nil, errors.Errors[errors.InvalidAmount]
 		}
 
 		if amount < 0 {
-			sender = hederatools.ToHederaAccountId(acc)
+			sender = account
 			builderTransaction.AddSender(
 				sender,
 				hedera.HbarFromTinybar(int64(amount)))
 		} else {
-			builderTransaction.AddRecipient(hedera.AccountID{
-				Shard:   uint64(acc.Shard),
-				Realm:   uint64(acc.Realm),
-				Account: uint64(acc.Number),
-			},
+			builderTransaction.AddRecipient(sender,
 				hederatools.ToHbarAmount(int64(amount)))
 		}
 	}
@@ -147,14 +139,13 @@ func (c *ConstructionService) handleCryptoTransferPayload(operations []*rTypes.O
 	return &rTypes.ConstructionPayloadsResponse{
 		UnsignedTransaction: hexutils.SafeAddHexPrefix(hex.EncodeToString(bytesTransaction)),
 		Payloads: []*rTypes.SigningPayload{{
-			Address:       fmt.Sprintf("%d.%d.%d", sender.Shard, sender.Realm, sender.Account),
-			Bytes:         bytesTransaction,
-			SignatureType: "",
+			Address: sender.String(),
+			Bytes:   bytesTransaction,
 		}},
 	}, nil
 }
 
-func NewConstructionAPIService(network *rTypes.NetworkIdentifier) server.ConstructionAPIServicer {
+func NewConstructionAPIService() server.ConstructionAPIServicer {
 	return &ConstructionService{
 		hederaClient: hedera.ClientForTestnet(),
 	}

@@ -30,7 +30,7 @@ func NewBlockchainRouter(network *types.NetworkIdentifier, asserter *asserter.As
 	mempoolAPIService := services.NewMempoolAPIService()
 	mempoolAPIController := server.NewMempoolAPIController(mempoolAPIService, asserter)
 
-	constructionAPIService := services.NewConstructionAPIService(network)
+	constructionAPIService := services.NewConstructionAPIService()
 	constructionAPIController := server.NewConstructionAPIController(constructionAPIService, asserter)
 
 	return server.NewRouter(networkAPIController, blockAPIController, mempoolAPIController, constructionAPIController)
