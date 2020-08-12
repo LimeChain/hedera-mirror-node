@@ -5,11 +5,13 @@ import (
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
+	dbTypes "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistance/postgres/types"
 	"github.com/jinzhu/gorm"
 )
 
 const (
 	whereClauseBeforeConsensusEnd string = "consensus_timestamp = (SELECT MAX(consensus_timestamp) FROM %s WHERE consensus_timestamp <= %d)"
+	balanceChangeBetween          string = "select sum(amount::bigint) as value, count(consensus_timestamp) as number_of_transfers from %s where consensus_timestamp > %d and consensus_timestamp <= %d and entity_id = %d"
 )
 
 type accountBalance struct {
@@ -17,6 +19,11 @@ type accountBalance struct {
 	Balance            int64 `gorm:"type:bigint"`
 	AccountRealmNum    int16 `gorm:"type:smallint;primary_key"`
 	AccountNum         int32 `gorm:"type:integer;primary_key"`
+}
+
+type balanceChange struct {
+	Value             int64 `gorm:"type:bigint"`
+	NumberOfTransfers int64 `gorm:"type:bigint"`
 }
 
 // TableName - Set table name of the accountBalance to be `account_balance`
@@ -36,19 +43,33 @@ func NewAccountRepository(dbClient *gorm.DB) *AccountRepository {
 	}
 }
 
-// RetrieveBalanceAtBlock returns the balance of the account at a given block (provided by consensusEnd timestamp)
+// RetrieveBalanceAtBlock returns the balance of the account at a given block (provided by consensusEnd timestamp).
+// balance = balanceAtLatestBalanceSnapshot + balanceChangeBetweenSnapshotAndBlock
 func (ar *AccountRepository) RetrieveBalanceAtBlock(addressStr string, consensusEnd int64) (*types.Amount, *rTypes.Error) {
 	acc, err := types.AccountFromString(addressStr)
 	if err != nil {
 		return nil, err
 	}
+	entityID, err1 := acc.ComputeEncodedID()
+	if err1 != nil {
+		return nil, errors.Errors[errors.InvalidAccount]
+	}
 
+	// gets the most recent balance before block
 	ab := &accountBalance{}
 	if ar.dbClient.Where(&accountBalance{AccountRealmNum: int16(acc.Realm), AccountNum: int32(acc.Number)}).Where(fmt.Sprintf(whereClauseBeforeConsensusEnd, ab.TableName(), consensusEnd)).Find(&ab).RecordNotFound() {
+		ab.Balance = 0
+	}
+
+	ct := &dbTypes.CryptoTransfer{}
+	r := &balanceChange{}
+	// gets the balance change from the Balance snapshot until the target block
+	ar.dbClient.Raw(fmt.Sprintf(balanceChangeBetween, ct.TableName(), ab.ConsensusTimestamp, consensusEnd, entityID)).Scan(r)
+	if ab.Balance == 0 && r.NumberOfTransfers == 0 {
 		return nil, errors.Errors[errors.AccountNotFound]
 	}
 
 	return &types.Amount{
-		Value: ab.Balance,
+		Value: ab.Balance + r.Value,
 	}, nil
 }

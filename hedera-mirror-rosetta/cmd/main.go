@@ -23,12 +23,12 @@ func NewBlockchainRouter(network *types.NetworkIdentifier, asserter *asserter.As
 	transactionRepo := transaction.NewTransactionRepository(dbClient)
 	accountRepo := account.NewAccountRepository(dbClient)
 
-	commons := services.NewCommons(blockRepo)
+	commons := services.NewCommons(blockRepo, transactionRepo)
 
 	networkAPIService := services.NewNetworkAPIService(network, version, blockRepo, transactionRepo)
 	networkAPIController := server.NewNetworkAPIController(networkAPIService, asserter)
 
-	blockAPIService := services.NewBlockAPIService(commons, transactionRepo)
+	blockAPIService := services.NewBlockAPIService(commons)
 	blockAPIController := server.NewBlockAPIController(blockAPIService, asserter)
 
 	mempoolAPIService := services.NewMempoolAPIService()

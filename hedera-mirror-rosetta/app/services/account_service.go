@@ -23,27 +23,28 @@ func NewAccountAPIService(commons Commons, accountRepo repositories.AccountRepos
 
 // AccountBalance implements the /account/balance endpoint.
 func (a *AccountAPIService) AccountBalance(ctx context.Context, request *rTypes.AccountBalanceRequest) (*rTypes.AccountBalanceResponse, *rTypes.Error) {
-	bIdentifier := &rTypes.BlockIdentifier{}
-	balance := &types.Amount{}
+	var block *types.Block
+	var err *rTypes.Error
 
 	if request.BlockIdentifier != nil {
-		block, err := a.RetrieveBlock(request.BlockIdentifier)
-		if err != nil {
-			return nil, err
-		}
-		balance, err = a.accountRepo.RetrieveBalanceAtBlock(request.AccountIdentifier.Address, block.ConsensusEnd)
-		if err != nil {
-			return nil, err
-		}
-
-		bIdentifier.Index = *request.BlockIdentifier.Index
-		bIdentifier.Hash = *request.BlockIdentifier.Hash
+		block, err = a.RetrieveBlock(request.BlockIdentifier)
 	} else {
-		// TODO populate latest block index and hash
+		block, err = a.blockRepo.RetrieveLatest()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	balance, err := a.accountRepo.RetrieveBalanceAtBlock(request.AccountIdentifier.Address, block.ConsensusEnd)
+	if err != nil {
+		return nil, err
 	}
 
 	return &rTypes.AccountBalanceResponse{
-		BlockIdentifier: bIdentifier,
-		Balances:        []*rTypes.Amount{balance.ToRosettaAmount()},
+		BlockIdentifier: &rTypes.BlockIdentifier{
+			Index: block.ConsensusStart,
+			Hash:  block.Hash,
+		},
+		Balances: []*rTypes.Amount{balance.ToRosettaAmount()},
 	}, nil
 }

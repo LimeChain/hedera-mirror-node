@@ -4,21 +4,18 @@ import (
 	"context"
 	"github.com/coinbase/rosetta-sdk-go/server"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
-	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/repositories"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/hex"
 )
 
 // BlockAPIService implements the server.BlockAPIServicer interface.
 type BlockAPIService struct {
 	Commons
-	transactionRepo repositories.TransactionRepository
 }
 
 // NewBlockAPIService creates a new instance of a BlockAPIService.
-func NewBlockAPIService(commons Commons, transactionRepo repositories.TransactionRepository) server.BlockAPIServicer {
+func NewBlockAPIService(commons Commons) server.BlockAPIServicer {
 	return &BlockAPIService{
-		Commons:         commons,
-		transactionRepo: transactionRepo,
+		Commons: commons,
 	}
 }
 

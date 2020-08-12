@@ -9,13 +9,15 @@ import (
 
 // Commons - Struct implementing common functionalities used by more than 1 service
 type Commons struct {
-	blockRepo repositories.BlockRepository
+	blockRepo       repositories.BlockRepository
+	transactionRepo repositories.TransactionRepository
 }
 
 // NewCommons - Service containing common functions that are shared between other services
-func NewCommons(blockRepo repositories.BlockRepository) Commons {
+func NewCommons(blockRepo repositories.BlockRepository, transactionRepo repositories.TransactionRepository) Commons {
 	return Commons{
-		blockRepo: blockRepo,
+		blockRepo:       blockRepo,
+		transactionRepo: transactionRepo,
 	}
 }
 
