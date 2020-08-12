@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"crypto/ed25519"
 	"encoding/hex"
 	"github.com/coinbase/rosetta-sdk-go/server"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
@@ -18,7 +19,20 @@ type ConstructionService struct {
 }
 
 func (c *ConstructionService) ConstructionCombine(ctx context.Context, request *rTypes.ConstructionCombineRequest) (*rTypes.ConstructionCombineResponse, *rTypes.Error) {
-	panic("implement me")
+	if len(request.Signatures) != 1 {
+		return nil, errors.Errors[errors.MultipleSignaturesPresent]
+	}
+
+	signature := request.Signatures[0]
+
+	verified := ed25519.Verify(signature.PublicKey.Bytes, signature.Bytes, signature.SigningPayload.Bytes)
+	if !verified {
+		return nil, errors.Errors[errors.InvalidSignature]
+	}
+
+	return &rTypes.ConstructionCombineResponse{
+		SignedTransaction: hexutils.SafeAddHexPrefix(hex.EncodeToString(signature.SigningPayload.Bytes)),
+	}, nil
 }
 
 func (c *ConstructionService) ConstructionDerive(ctx context.Context, request *rTypes.ConstructionDeriveRequest) (*rTypes.ConstructionDeriveResponse, *rTypes.Error) {
