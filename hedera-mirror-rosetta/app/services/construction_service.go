@@ -7,7 +7,6 @@ import (
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/config"
-	hederatools "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/hedera"
 	hexutils "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/hex"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/validator"
 	"github.com/hashgraph/hedera-sdk-go"
@@ -78,8 +77,8 @@ func (c *ConstructionService) handleCryptoCreateAccountPayload(operations []*rTy
 
 	transaction, err := hedera.
 		NewAccountCreateTransaction().
-		SetInitialBalance(hederatools.ToHbarAmount(int64(amount))).
-		SetTransactionID(hederatools.TransactionId(sender)).
+		SetInitialBalance(hedera.HbarFromTinybar(int64(amount))).
+		SetTransactionID(hedera.NewTransactionID(sender)).
 		Build(c.hederaClient)
 
 	if err != nil {
@@ -122,7 +121,7 @@ func (c *ConstructionService) handleCryptoTransferPayload(operations []*rTypes.O
 				hedera.HbarFromTinybar(int64(amount)))
 		} else {
 			builderTransaction.AddRecipient(sender,
-				hederatools.ToHbarAmount(int64(amount)))
+				hedera.HbarFromTinybar(int64(amount)))
 		}
 	}
 
