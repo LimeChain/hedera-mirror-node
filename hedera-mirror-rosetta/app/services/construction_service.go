@@ -30,7 +30,9 @@ func (c *ConstructionService) ConstructionHash(ctx context.Context, request *rTy
 }
 
 func (c *ConstructionService) ConstructionMetadata(ctx context.Context, request *rTypes.ConstructionMetadataRequest) (*rTypes.ConstructionMetadataResponse, *rTypes.Error) {
-	return &rTypes.ConstructionMetadataResponse{}, nil
+	return &rTypes.ConstructionMetadataResponse{
+		Metadata: make(map[string]interface{}),
+	}, nil
 }
 
 func (c *ConstructionService) ConstructionParse(ctx context.Context, request *rTypes.ConstructionParseRequest) (*rTypes.ConstructionParseResponse, *rTypes.Error) {
@@ -174,7 +176,9 @@ func (c *ConstructionService) handleCryptoTransferPreProcess(operations []*rType
 		return nil, err1
 	}
 
-	return &rTypes.ConstructionPreprocessResponse{}, nil
+	return &rTypes.ConstructionPreprocessResponse{
+		Options: make(map[string]interface{}),
+	}, nil
 }
 
 func NewConstructionAPIService() server.ConstructionAPIServicer {
