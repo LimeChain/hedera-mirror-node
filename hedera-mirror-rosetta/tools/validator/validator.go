@@ -12,7 +12,7 @@ func ValidateOperationsTypes(operations []*types.Operation) (*string, *types.Err
 
 	for i := 1; i < length; i++ {
 		if operations[i].Type != typeOperation {
-			return nil, errors.Errors[errors.OnlyOneOperationTypePresent]
+			return nil, errors.Errors[errors.MultipleOperationTypesPresent]
 		}
 	}
 
