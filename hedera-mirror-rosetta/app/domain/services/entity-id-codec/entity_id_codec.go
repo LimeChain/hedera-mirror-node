@@ -13,7 +13,7 @@ const (
 	numberMask int64 = (int64(1) << numberBits) - 1
 )
 
-// DecodedData returns the decoded data from the DB Hash
+// DecodedData returns the decoded data from the DB ID
 type DecodedData struct {
 	ShardNum  int64
 	RealmNum  int64

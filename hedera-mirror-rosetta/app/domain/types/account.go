@@ -31,7 +31,7 @@ func NewAccountFromEncodedID(encodedID int64) (*Account, error) {
 	}, err
 }
 
-// ComputeEncodedID - returns the encoded Hash from the Shard, Realm and Number
+// ComputeEncodedID - returns the encoded ID from the Shard, Realm and Number
 func (a *Account) ComputeEncodedID() (int64, error) {
 	return entity_id_codec.Encode(a.Shard, a.Realm, a.Number)
 }
