@@ -1,4 +1,4 @@
-package services
+package entity_id_codec
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ const (
 	numberMask int64 = (int64(1) << numberBits) - 1
 )
 
-// DecodedData returns the decoded data from the DB ID
+// DecodedData returns the decoded data from the DB Hash
 type DecodedData struct {
 	ShardNum  int64
 	RealmNum  int64
