@@ -1,28 +1,26 @@
 package errors
 
 import (
-	"net/http"
-
 	"github.com/coinbase/rosetta-sdk-go/types"
 )
 
 // Errors - map of all Errors that this API can return
 var Errors = map[string]*types.Error{
-	BlockNotFound:                  New(BlockNotFound, http.StatusNotFound, true),
-	AccountNotFound:                New(AccountNotFound, http.StatusNotFound, true),
-	TransactionBuildFailed:         New(TransactionBuildFailed, http.StatusBadRequest, false),
-	TransactionDecodeFailed:        New(TransactionDecodeFailed, http.StatusBadRequest, false),
-	TransactionMarshallingFailed:   New(TransactionMarshallingFailed, http.StatusBadRequest, false),
-	TransactionUnmarshallingFailed: New(TransactionUnmarshallingFailed, http.StatusBadRequest, false),
-	TransactionNotFound:            New(TransactionNotFound, http.StatusNotFound, true),
-	MultipleOperationTypesPresent:  New(MultipleOperationTypesPresent, http.StatusBadRequest, false),
-	StartMustBeBeforeEnd:           New(StartMustBeBeforeEnd, http.StatusBadRequest, false),
-	InvalidAccount:                 New(InvalidAccount, http.StatusBadRequest, false),
-	InvalidAmount:                  New(InvalidAmount, http.StatusBadRequest, false),
-	InvalidOperationsAmount:        New(InvalidOperationsAmount, http.StatusBadRequest, false),
-	InvalidOperationsTotalAmount:   New(InvalidOperationsTotalAmount, http.StatusBadRequest, false),
-	InvalidTransactionIdentifier:   New(InvalidTransactionIdentifier, http.StatusBadRequest, false),
-	NotImplemented:                 New(NotImplemented, http.StatusNotImplemented, false),
+	BlockNotFound:                  New(BlockNotFound, 1, true),
+	AccountNotFound:                New(AccountNotFound, 2, true),
+	TransactionBuildFailed:         New(TransactionBuildFailed, 3, false),
+	TransactionDecodeFailed:        New(TransactionDecodeFailed, 4, false),
+	TransactionMarshallingFailed:   New(TransactionMarshallingFailed, 5, false),
+	TransactionUnmarshallingFailed: New(TransactionUnmarshallingFailed, 6, false),
+	TransactionNotFound:            New(TransactionNotFound, 7, true),
+	MultipleOperationTypesPresent:  New(MultipleOperationTypesPresent, 8, false),
+	StartMustBeBeforeEnd:           New(StartMustBeBeforeEnd, 9, false),
+	InvalidAccount:                 New(InvalidAccount, 10, false),
+	InvalidAmount:                  New(InvalidAmount, 11, false),
+	InvalidOperationsAmount:        New(InvalidOperationsAmount, 12, false),
+	InvalidOperationsTotalAmount:   New(InvalidOperationsTotalAmount, 13, false),
+	InvalidTransactionIdentifier:   New(InvalidTransactionIdentifier, 14, false),
+	NotImplemented:                 New(NotImplemented, 15, false),
 }
 
 const (
@@ -43,11 +41,11 @@ const (
 	NotImplemented                 string = "Not implemented"
 )
 
-func New(message string, statusCode int32, retriable bool) *types.Error {
+func New(message string, statusCode int32, retryable bool) *types.Error {
 	return &types.Error{
 		Message:   message,
 		Code:      statusCode,
-		Retriable: retriable,
+		Retriable: retryable,
 		Details:   nil,
 	}
 }
