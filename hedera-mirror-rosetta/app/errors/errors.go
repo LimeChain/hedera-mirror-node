@@ -6,37 +6,47 @@ import (
 
 // Errors - map of all Errors that this API can return
 var Errors = map[string]*types.Error{
-	BlockNotFound:                  New(BlockNotFound, 1, true),
-	AccountNotFound:                New(AccountNotFound, 2, true),
-	TransactionBuildFailed:         New(TransactionBuildFailed, 3, false),
-	TransactionDecodeFailed:        New(TransactionDecodeFailed, 4, false),
-	TransactionMarshallingFailed:   New(TransactionMarshallingFailed, 5, false),
-	TransactionUnmarshallingFailed: New(TransactionUnmarshallingFailed, 6, false),
-	TransactionNotFound:            New(TransactionNotFound, 7, true),
-	MultipleOperationTypesPresent:  New(MultipleOperationTypesPresent, 8, false),
-	StartMustBeBeforeEnd:           New(StartMustBeBeforeEnd, 9, false),
-	InvalidAccount:                 New(InvalidAccount, 10, false),
-	InvalidAmount:                  New(InvalidAmount, 11, false),
-	InvalidOperationsAmount:        New(InvalidOperationsAmount, 12, false),
-	InvalidOperationsTotalAmount:   New(InvalidOperationsTotalAmount, 13, false),
-	InvalidTransactionIdentifier:   New(InvalidTransactionIdentifier, 14, false),
-	NotImplemented:                 New(NotImplemented, 15, false),
+	AppendSignatureFailed:          New(AppendSignatureFailed, http.StatusBadRequest, false),
+	BlockNotFound:                  New(BlockNotFound, http.StatusNotFound, true),
+	AccountNotFound:                New(AccountNotFound, http.StatusNotFound, true),
+	TransactionBuildFailed:         New(TransactionBuildFailed, http.StatusBadRequest, false),
+	TransactionDecodeFailed:        New(TransactionDecodeFailed, http.StatusBadRequest, false),
+	TransactionRecordFetchFailed:   New(TransactionRecordFetchFailed, http.StatusBadRequest, false),
+	TransactionMarshallingFailed:   New(TransactionMarshallingFailed, http.StatusBadRequest, false),
+	TransactionUnmarshallingFailed: New(TransactionUnmarshallingFailed, http.StatusBadRequest, false),
+	TransactionSubmissionFailed:    New(TransactionSubmissionFailed, http.StatusBadRequest, false),
+	TransactionNotFound:            New(TransactionNotFound, http.StatusNotFound, true),
+	MultipleOperationTypesPresent:  New(MultipleOperationTypesPresent, http.StatusBadRequest, false),
+	MultipleSignaturesPresent:      New(MultipleSignaturesPresent, http.StatusBadRequest, false),
+	StartMustBeBeforeEnd:           New(StartMustBeBeforeEnd, http.StatusBadRequest, false),
+	InvalidAccount:                 New(InvalidAccount, http.StatusBadRequest, false),
+	InvalidAmount:                  New(InvalidAmount, http.StatusBadRequest, false),
+	InvalidOperationsAmount:        New(InvalidOperationsAmount, http.StatusBadRequest, false),
+	InvalidOperationsTotalAmount:   New(InvalidOperationsTotalAmount, http.StatusBadRequest, false),
+	InvalidPublicKey:               New(InvalidPublicKey, http.StatusBadRequest, false),
+	InvalidTransactionIdentifier:   New(InvalidTransactionIdentifier, http.StatusBadRequest, false),
+	NotImplemented:                 New(NotImplemented, http.StatusNotImplemented, false),
 }
 
 const (
+	AppendSignatureFailed          string = "Combine unsigned transaction with signature failed"
 	BlockNotFound                  string = "Block not found"
 	AccountNotFound                string = "Account not found"
 	TransactionBuildFailed         string = "Transaction build failed"
 	TransactionDecodeFailed        string = "Transaction Decode failed"
+	TransactionRecordFetchFailed   string = "Transaction record fetch failed"
 	TransactionMarshallingFailed   string = "Transaction marshalling failed"
 	TransactionUnmarshallingFailed string = "Transaction unmarshalling failed"
+	TransactionSubmissionFailed    string = "Transaction submission failed"
 	TransactionNotFound            string = "Transaction not found"
 	MultipleOperationTypesPresent  string = "Only one Operation Type must be present"
+	MultipleSignaturesPresent      string = "Only one signature must be present"
 	StartMustBeBeforeEnd           string = "Start must be before end"
 	InvalidAccount                 string = "Invalid Account provided"
 	InvalidAmount                  string = "Invalid Amount provided"
 	InvalidOperationsAmount        string = "Invalid Operations amount provided"
 	InvalidOperationsTotalAmount   string = "Operations total amount must be 0"
+	InvalidPublicKey               string = "Invalid Public Key provided"
 	InvalidTransactionIdentifier   string = "Invalid Transaction Identifier provided"
 	NotImplemented                 string = "Not implemented"
 )
