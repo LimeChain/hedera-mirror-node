@@ -25,7 +25,7 @@ func NewBlockchainRouter(network *types.NetworkIdentifier, asserter *asserter.As
 
 	commons := services.NewCommons(blockRepo, transactionRepo)
 
-	networkAPIService := services.NewNetworkAPIService(network, version, blockRepo, transactionRepo)
+	networkAPIService := services.NewNetworkAPIService(commons, network, version)
 	networkAPIController := server.NewNetworkAPIController(networkAPIService, asserter)
 
 	blockAPIService := services.NewBlockAPIService(commons)
