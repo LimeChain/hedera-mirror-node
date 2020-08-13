@@ -25,7 +25,6 @@ var Errors = map[string]*types.Error{
 	InvalidOperationsAmount:        New(InvalidOperationsAmount, http.StatusBadRequest, false),
 	InvalidOperationsTotalAmount:   New(InvalidOperationsTotalAmount, http.StatusBadRequest, false),
 	InvalidPublicKey:               New(InvalidPublicKey, http.StatusBadRequest, false),
-	InvalidSignature:               New(InvalidSignature, http.StatusBadRequest, false),
 	InvalidTransactionIdentifier:   New(InvalidTransactionIdentifier, http.StatusBadRequest, false),
 	NotImplemented:                 New(NotImplemented, http.StatusNotImplemented, false),
 }
@@ -48,7 +47,6 @@ const (
 	InvalidOperationsAmount        string = "Invalid Operations amount provided"
 	InvalidOperationsTotalAmount   string = "Operations total amount must be 0"
 	InvalidPublicKey               string = "Invalid Public Key provided"
-	InvalidSignature               string = "Invalid signature"
 	InvalidTransactionIdentifier   string = "Invalid Transaction Identifier provided"
 	NotImplemented                 string = "Not implemented"
 )
