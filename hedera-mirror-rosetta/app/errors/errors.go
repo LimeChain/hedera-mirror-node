@@ -8,6 +8,7 @@ import (
 
 // Errors - map of all Errors that this API can return
 var Errors = map[string]*types.Error{
+	AppendSignatureFailed:          New(AppendSignatureFailed, http.StatusBadRequest, false),
 	BlockNotFound:                  New(BlockNotFound, http.StatusNotFound, true),
 	TransactionBuildFailed:         New(TransactionBuildFailed, http.StatusBadRequest, false),
 	TransactionDecodeFailed:        New(TransactionDecodeFailed, http.StatusBadRequest, false),
@@ -23,12 +24,14 @@ var Errors = map[string]*types.Error{
 	InvalidAmount:                  New(InvalidAmount, http.StatusBadRequest, false),
 	InvalidOperationsAmount:        New(InvalidOperationsAmount, http.StatusBadRequest, false),
 	InvalidOperationsTotalAmount:   New(InvalidOperationsTotalAmount, http.StatusBadRequest, false),
+	InvalidPublicKey:               New(InvalidPublicKey, http.StatusBadRequest, false),
 	InvalidSignature:               New(InvalidSignature, http.StatusBadRequest, false),
 	InvalidTransactionIdentifier:   New(InvalidTransactionIdentifier, http.StatusBadRequest, false),
 	NotImplemented:                 New(NotImplemented, http.StatusNotImplemented, false),
 }
 
 const (
+	AppendSignatureFailed          string = "Combine unsigned transaction with signature failed"
 	BlockNotFound                  string = "Block not found"
 	TransactionBuildFailed         string = "Transaction build failed"
 	TransactionDecodeFailed        string = "Transaction Decode failed"
@@ -44,6 +47,7 @@ const (
 	InvalidAmount                  string = "Invalid Amount provided"
 	InvalidOperationsAmount        string = "Invalid Operations amount provided"
 	InvalidOperationsTotalAmount   string = "Operations total amount must be 0"
+	InvalidPublicKey               string = "Invalid Public Key provided"
 	InvalidSignature               string = "Invalid signature"
 	InvalidTransactionIdentifier   string = "Invalid Transaction Identifier provided"
 	NotImplemented                 string = "Not implemented"

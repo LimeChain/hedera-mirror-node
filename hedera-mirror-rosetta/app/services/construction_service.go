@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"crypto/ed25519"
 	"encoding/hex"
 	"github.com/coinbase/rosetta-sdk-go/server"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
@@ -23,16 +22,38 @@ func (c *ConstructionService) ConstructionCombine(ctx context.Context, request *
 	if len(request.Signatures) != 1 {
 		return nil, errors.Errors[errors.MultipleSignaturesPresent]
 	}
+	request.UnsignedTransaction = hexutils.SafeRemoveHexPrefix(request.UnsignedTransaction)
+	bytesTransaction, err := hex.DecodeString(request.UnsignedTransaction)
+	if err != nil {
+		return nil, errors.Errors[errors.TransactionDecodeFailed]
+	}
+
+	var transaction hedera.Transaction
+	err = transaction.UnmarshalBinary(bytesTransaction)
+
+	if err != nil {
+		return nil, errors.Errors[errors.TransactionUnmarshallingFailed]
+	}
 
 	signature := request.Signatures[0]
+	pubKey, err := hedera.Ed25519PublicKeyFromBytes(signature.PublicKey.Bytes)
 
-	verified := ed25519.Verify(signature.PublicKey.Bytes, signature.Bytes, signature.SigningPayload.Bytes)
-	if !verified {
-		return nil, errors.Errors[errors.InvalidSignature]
+	if err != nil {
+		return nil, errors.Errors[errors.InvalidPublicKey]
+	}
+
+	resultTransaction, err := transaction.AppendSignature(pubKey, signature.SigningPayload.Bytes)
+	if err != nil {
+		return nil, errors.Errors[errors.AppendSignatureFailed]
+	}
+
+	bytesTransaction, err = resultTransaction.MarshalBinary()
+	if err != nil {
+		return nil, errors.Errors[errors.TransactionMarshallingFailed]
 	}
 
 	return &rTypes.ConstructionCombineResponse{
-		SignedTransaction: hexutils.SafeAddHexPrefix(hex.EncodeToString(signature.SigningPayload.Bytes)),
+		SignedTransaction: hexutils.SafeAddHexPrefix(hex.EncodeToString(bytesTransaction)),
 	}, nil
 }
 
@@ -41,10 +62,13 @@ func (c *ConstructionService) ConstructionDerive(ctx context.Context, request *r
 }
 
 func (c *ConstructionService) ConstructionHash(ctx context.Context, request *rTypes.ConstructionHashRequest) (*rTypes.TransactionIdentifierResponse, *rTypes.Error) {
+	request.SignedTransaction = hexutils.SafeRemoveHexPrefix(request.SignedTransaction)
+
 	bytesTransaction, err := hex.DecodeString(request.SignedTransaction)
 	if err != nil {
 		return nil, errors.Errors[errors.TransactionDecodeFailed]
 	}
+
 	digest := sha3.Sum384(bytesTransaction)
 
 	return &rTypes.TransactionIdentifierResponse{
