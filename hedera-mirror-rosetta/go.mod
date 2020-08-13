@@ -12,4 +12,4 @@ require (
 	gopkg.in/yaml.v2 v2.2.2
 )
 
-replace github.com/hashgraph/hedera-sdk-go v0.9.1 => github.com/limechain/hedera-sdk-go v0.9.2-0.20200813130033-3a91d3de7d55
+replace github.com/hashgraph/hedera-sdk-go v0.9.1 => github.com/limechain/hedera-sdk-go v0.9.2-0.20200813152811-0a57de9e27e1
