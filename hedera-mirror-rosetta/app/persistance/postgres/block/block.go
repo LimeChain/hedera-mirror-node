@@ -11,7 +11,11 @@ import (
 const genesisPreviousHash = "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 
 const (
+	// selectLatestAddRank - Selects row with the latest consensus_start and adds additional info about the position of that row (in terms of order by consensus_start) using the "rank" and "OVER".
+	// The information about the position is used as Block Index
 	selectLatestAddRank string = `SELECT * FROM (SELECT *, rank() OVER (ORDER BY consensus_start asc) FROM %s) AS res WHERE consensus_start = (SELECT MAX(consensus_start) FROM %s)`
+	// selectByHashAddRank - Selects the row with a given file_hash and adds additional info about the poistion of that row (in terms of order by consensus_start) using the "rank" and "OVER".
+	//The information about the position is used as Block Index
 	selectByHashAddRank string = `SELECT * FROM (SELECT *, rank() OVER (ORDER BY consensus_start asc) FROM %s) AS res WHERE res.file_hash ='%s'`
 )
 
