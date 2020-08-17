@@ -1,6 +1,6 @@
 name: Rosetta Validation
 
-on: [pull_request]
+on: [push]
 
 jobs:
   run:
