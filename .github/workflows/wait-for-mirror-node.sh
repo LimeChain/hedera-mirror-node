@@ -1,7 +1,6 @@
 counter=0
-while [  $counter -lt 60 ];
+while [  $counter -lt 120 ];
   do sleep 1
-  echo $counter
   response=$(curl -sL -w "%{http_code}" -d '{"metadata":{}}' -i "http://localhost:5700/network/list")
   http_code=$(tail -n1 <<< "$response")
   if [ "$http_code" = "200" ]
@@ -13,3 +12,6 @@ while [  $counter -lt 60 ];
     counter=$((counter + 1))
   fi
 done
+
+echo Timed out. Mirror Node did not start
+exit 1
