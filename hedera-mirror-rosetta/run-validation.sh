@@ -1,7 +1,9 @@
 echo Getting Rosetta CLI...
 
+echo here
 # Temporarily using Git Clone instead of Go Get. New version with support of start & end indexes is not released yet
 git clone https://github.com/coinbase/rosetta-cli.git
+echo here2
 ls -la
 cd ./rosetta-cli
 
