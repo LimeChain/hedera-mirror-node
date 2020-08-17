@@ -3,7 +3,7 @@ name: Rosetta Validation
 on: [push]
 
 jobs:
-  start-mirror-node:
+  validate:
     runs-on: ubuntu-latest
 
     steps:
@@ -15,3 +15,5 @@ jobs:
     - name: Wait for Mirror Node to start
       run: bash ./.github/workflows/wait-for-mirror-node.sh
 
+    - name: Run CLI Validation
+      run: bash ./hedera-mirror-rosetta/run-validation.sh
