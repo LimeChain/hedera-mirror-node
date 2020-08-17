@@ -1,3 +1,5 @@
+#!/bin/bash
+
 counter=0
 while [  $counter -lt 120 ];
   do sleep 1
