@@ -8,7 +8,7 @@ while [  $counter -lt 120 ];
     echo Mirror Node has started
     exit 0
   else
-    echo Mirror Node have not started yet...
+    echo Mirror Node has not started yet...
     counter=$((counter + 1))
   fi
 done
