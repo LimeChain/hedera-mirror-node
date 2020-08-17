@@ -16,4 +16,5 @@ jobs:
       run: bash ./.github/workflows/wait-for-mirror-node.sh
 
     - name: Run CLI Validation
-      run: $(cd ./hedera-mirror-rosetta/ ; bash ./run-validation.sh)
+#      run: $(cd ./hedera-mirror-rosetta/ ; bash ./run-validation.sh)
+      run: bash ./hedera-mirror-rosetta/run-validation.sh
