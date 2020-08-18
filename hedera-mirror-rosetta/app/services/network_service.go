@@ -74,7 +74,6 @@ func (n *NetworkService) NetworkStatus(ctx context.Context, request *types.Netwo
 			Index: genesisBlock.Index,
 			Hash:  hex.SafeAddHexPrefix(genesisBlock.Hash),
 		},
-		// TODO: Add after migration has been added
 		Peers: peers.ToRosettaPeers(),
 	}, nil
 }
