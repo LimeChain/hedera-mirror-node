@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"crypto/sha512"
 	"encoding/hex"
 	"github.com/coinbase/rosetta-sdk-go/server"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
@@ -10,7 +11,6 @@ import (
 	hexutils "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/hex"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/validator"
 	"github.com/hashgraph/hedera-sdk-go"
-	"golang.org/x/crypto/sha3"
 	"strconv"
 )
 
@@ -69,7 +69,7 @@ func (c *ConstructionService) ConstructionHash(ctx context.Context, request *rTy
 		return nil, errors.Errors[errors.TransactionDecodeFailed]
 	}
 
-	digest := sha3.Sum384(bytesTransaction)
+	digest := sha512.Sum384(bytesTransaction)
 
 	return &rTypes.TransactionIdentifierResponse{
 		TransactionIdentifier: &rTypes.TransactionIdentifier{
