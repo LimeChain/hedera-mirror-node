@@ -1,10 +1,10 @@
 package address_book_entry
 
 import (
+	"fmt"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/jinzhu/gorm"
-	"strconv"
 )
 
 type addressBookEntry struct {
@@ -14,7 +14,7 @@ type addressBookEntry struct {
 	Port               int32  `gorm:"type:integer"`
 	Memo               string `gorm:"size:128"`
 	PublicKey          string `gorm:"size:1024"`
-	NodeId             *int   `gorm:"type:bigint"`
+	NodeId             *int64 `gorm:"type:bigint"`
 	NodeAccountId      int64  `gorm:"type:bigint"`
 	NodeCertHash       []byte `gorm:"type:bytea"`
 }
@@ -23,12 +23,21 @@ func (addressBookEntry) TableName() string {
 	return "address_book_entry"
 }
 
-func (abe *addressBookEntry) GetPeerId() string {
+func (abe *addressBookEntry) getPeerId() *types.Account {
 	if abe.NodeId == nil {
-		return abe.Memo
+		acc, err := types.AccountFromString(abe.Memo)
+		if err != nil {
+			panic(fmt.Sprintf("Cannot create Account ID from encoded DB ID: %s", abe.Memo))
+		}
+		return acc
 	}
 
-	return strconv.Itoa(*abe.NodeId)
+	decoded, err := types.NewAccountFromEncodedID(*abe.NodeId)
+	if err != nil {
+		panic(fmt.Sprintf("Cannot create Account ID from encoded DB ID: %s", abe.Memo))
+	}
+
+	return decoded
 }
 
 // AddressBookEntryRepository struct that has connection to the Database
@@ -43,7 +52,7 @@ func (aber *AddressBookEntryRepository) Entries() (*types.AddressBookEntries, *r
 	entries := make([]*types.AddressBookEntry, len(dbEntries))
 	for i, e := range dbEntries {
 		entries[i] = &types.AddressBookEntry{
-			PeerId: e.GetPeerId(),
+			PeerId: e.getPeerId(),
 			Metadata: map[string]interface{}{
 				"ip":   e.Ip,
 				"port": e.Port,

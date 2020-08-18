@@ -6,7 +6,7 @@ import (
 
 // AddressBookEntry is domain level struct used to represent Rosetta Peer
 type AddressBookEntry struct {
-	PeerId   string
+	PeerId   *Account
 	Metadata map[string]interface{}
 }
 
@@ -18,7 +18,7 @@ type AddressBookEntries struct {
 // ToRosettaPeer returns Rosetta type Peer from the current domain type AddressBookEntry
 func (abe *AddressBookEntry) ToRosettaPeer() *rTypes.Peer {
 	return &rTypes.Peer{
-		PeerID:   abe.PeerId,
+		PeerID:   abe.PeerId.FormatToString(),
 		Metadata: abe.Metadata,
 	}
 }
