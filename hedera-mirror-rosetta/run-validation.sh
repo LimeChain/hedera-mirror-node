@@ -1,4 +1,7 @@
 #!/bin/bash
+parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
+cd "$parent_path"
+
 echo Getting Rosetta CLI...
 
 # Temporarily using Git Clone instead of Go Get. New version with support of start & end indexes is not released yet
