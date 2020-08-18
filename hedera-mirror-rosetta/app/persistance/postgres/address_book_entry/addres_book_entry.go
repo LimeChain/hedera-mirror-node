@@ -28,14 +28,14 @@ func (abe *addressBookEntry) getPeerId() *types.Account {
 	if abe.NodeId == nil {
 		acc, err := types.AccountFromString(abe.Memo)
 		if err != nil {
-			panic(fmt.Sprintf(errors.CreateAccountIdFailed, abe.Memo))
+			panic(fmt.Sprintf(errors.CreateAccountDbIdFailed, abe.Memo))
 		}
 		return acc
 	}
 
 	decoded, err := types.NewAccountFromEncodedID(*abe.NodeId)
 	if err != nil {
-		panic(fmt.Sprintf(errors.CreateAccountIdFailed, abe.NodeId))
+		panic(fmt.Sprintf(errors.CreateAccountDbIdFailed, abe.NodeId))
 	}
 
 	return decoded
