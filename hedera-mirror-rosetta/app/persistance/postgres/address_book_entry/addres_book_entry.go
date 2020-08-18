@@ -4,6 +4,7 @@ import (
 	"fmt"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 	"github.com/jinzhu/gorm"
 )
 
@@ -27,14 +28,14 @@ func (abe *addressBookEntry) getPeerId() *types.Account {
 	if abe.NodeId == nil {
 		acc, err := types.AccountFromString(abe.Memo)
 		if err != nil {
-			panic(fmt.Sprintf("Cannot create Account ID from encoded DB ID: %s", abe.Memo))
+			panic(fmt.Sprintf(errors.CreateAccountIdFailed, abe.Memo))
 		}
 		return acc
 	}
 
 	decoded, err := types.NewAccountFromEncodedID(*abe.NodeId)
 	if err != nil {
-		panic(fmt.Sprintf("Cannot create Account ID from encoded DB ID: %s", abe.Memo))
+		panic(fmt.Sprintf(errors.CreateAccountIdFailed, abe.NodeId))
 	}
 
 	return decoded
