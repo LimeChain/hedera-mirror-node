@@ -1,6 +1,7 @@
 # -----------------------------  Rosetta  ----------------------------- #
 FROM golang:1.13 as rosetta-builder
 WORKDIR /tmp/src/hedera-mirror-rosetta
+# TODO Use Git Clone instead
 COPY ./hedera-mirror-rosetta . 
 RUN go build -o rosetta-executable ./cmd
 # -----------------------------  Rosetta END ----------------------------- #
@@ -39,6 +40,7 @@ USER postgres
 # then create a database `docker` owned by the ``docker`` role.
 # Note: here we use ``&&\`` to run commands one after the other - the ``\``
 #       allows the RUN command to span multiple lines.
+# TODO use the init db script!
 RUN    /etc/init.d/postgresql start &&\
     psql --command "create user mirror_grpc WITH password 'mirror_grpc_pass';" &&\
     psql --command "create user mirror_node with SUPERUSER password 'mirror_node_pass'" &&\
@@ -59,6 +61,7 @@ USER root
 # ---------------------------  Supervisord  --------------------------- #
 
 RUN mkdir -p /var/log/supervisor
+# TODO Use Git Clone instead
 COPY supervisord.conf supervisord.conf 
 
 # Copy the Rosetta Executable from the Rosetta Builder stage
