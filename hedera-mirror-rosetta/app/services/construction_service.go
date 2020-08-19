@@ -130,19 +130,16 @@ func (c *ConstructionService) ConstructionSubmit(ctx context.Context, request *r
 		return nil, errors.Errors[errors.TransactionUnmarshallingFailed]
 	}
 
-	transactionId, err := transaction.Execute(c.hederaClient)
+	_, err = transaction.Execute(c.hederaClient)
 	if err != nil {
 		return nil, errors.Errors[errors.TransactionSubmissionFailed]
 	}
 
-	transactionRecord, err := transactionId.GetRecord(c.hederaClient)
-	if err != nil {
-		return nil, errors.Errors[errors.TransactionRecordFetchFailed]
-	}
+	digest := sha512.Sum384(bytesTransaction)
 
 	return &rTypes.TransactionIdentifierResponse{
 		TransactionIdentifier: &rTypes.TransactionIdentifier{
-			Hash: hexutils.SafeAddHexPrefix(hex.EncodeToString(transactionRecord.TransactionHash)),
+			Hash: hexutils.SafeAddHexPrefix(hex.EncodeToString(digest[:])),
 		},
 		Metadata: nil,
 	}, nil
