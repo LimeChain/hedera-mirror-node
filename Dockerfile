@@ -1,19 +1,20 @@
-# -----------------------------  Rosetta  ----------------------------- #
+# ------------------------------  Rosetta  ------------------------------- #
 FROM golang:1.13 as rosetta-builder
 WORKDIR /tmp/src/hedera-mirror-rosetta
 # TODO Use Git Clone instead
 COPY ./hedera-mirror-rosetta . 
 RUN go build -o rosetta-executable ./cmd
-# -----------------------------  Rosetta END ----------------------------- #
 
-# ----------------------------- Importer/GRPC ---------------------------- #
+# ---------------------------- Importer/GRPC ----------------------------- #
 FROM openjdk:11.0 as java-builder
 
 RUN apt-get update && apt-get install -y git
 RUN git clone https://github.com/LimeChain/hedera-mirror-node.git
 RUN cd hedera-mirror-node && ./mvnw clean package -DskipTests
 
-# -------------------------- Importer/GRPC END --------------------------- #
+# ######################################################################## #
+# --------------------------- Runner Container --------------------------- #
+# ######################################################################## #
 
 FROM ubuntu:18.04 as runner
 
@@ -50,8 +51,6 @@ RUN echo "listen_addresses='*'" >> /etc/postgresql/9.6/main/postgresql.conf
 RUN echo "host    all             all             172.17.0.1/16           trust" >> /etc/postgresql/9.6/main/pg_hba.conf
 
 USER root
-# --------------------------- PosgreSQL END --------------------------- #
-
 
 # ---------------------------  Supervisord  --------------------------- #
 
