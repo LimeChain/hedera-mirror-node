@@ -1,0 +1,8 @@
+# Ignore everything
+**
+
+# Allow files and directories
+!/Dockerfile
+!/supervisord.conf
+!/hedera-mirror-rosetta
+!/application.yml
