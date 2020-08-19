@@ -1,4 +1,4 @@
-package address_book_entry
+package entry
 
 import (
 	"fmt"
@@ -6,6 +6,12 @@ import (
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 	"github.com/jinzhu/gorm"
+)
+
+const (
+	latestAddressBookEntries  = "SELECT abe.* FROM %s AS abe JOIN %s AS ab ON ab.start_consensus_timestamp = abe.consensus_timestamp WHERE ab.end_consensus_timestamp IS NULL"
+	tableNameAddressBook      = "address_book"
+	tableNameAddressBookEntry = "address_book_entry"
 )
 
 type addressBookEntry struct {
@@ -21,24 +27,7 @@ type addressBookEntry struct {
 }
 
 func (addressBookEntry) TableName() string {
-	return "address_book_entry"
-}
-
-func (abe *addressBookEntry) getPeerId() *types.Account {
-	if abe.NodeId == nil {
-		acc, err := types.AccountFromString(abe.Memo)
-		if err != nil {
-			panic(fmt.Sprintf(errors.CreateAccountDbIdFailed, abe.Memo))
-		}
-		return acc
-	}
-
-	decoded, err := types.NewAccountFromEncodedID(*abe.NodeId)
-	if err != nil {
-		panic(fmt.Sprintf(errors.CreateAccountDbIdFailed, abe.NodeId))
-	}
-
-	return decoded
+	return tableNameAddressBookEntry
 }
 
 // AddressBookEntryRepository struct that has connection to the Database
@@ -65,9 +54,26 @@ func (aber *AddressBookEntryRepository) Entries() (*types.AddressBookEntries, *r
 		Entries: entries}, nil
 }
 
+func (abe *addressBookEntry) getPeerId() *types.Account {
+	if abe.NodeId == nil {
+		acc, err := types.AccountFromString(abe.Memo)
+		if err != nil {
+			panic(fmt.Sprintf(errors.CreateAccountDbIdFailed, abe.Memo))
+		}
+		return acc
+	}
+
+	decoded, err := types.NewAccountFromEncodedID(*abe.NodeId)
+	if err != nil {
+		panic(fmt.Sprintf(errors.CreateAccountDbIdFailed, abe.NodeId))
+	}
+
+	return decoded
+}
+
 func (aber *AddressBookEntryRepository) retrieveEntries() []addressBookEntry {
 	var entries []addressBookEntry
-	aber.dbClient.Find(&entries)
+	aber.dbClient.Raw(fmt.Sprintf(latestAddressBookEntries, tableNameAddressBookEntry, tableNameAddressBook)).Scan(&entries)
 	return entries
 }
 

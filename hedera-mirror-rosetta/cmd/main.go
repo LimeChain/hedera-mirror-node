@@ -6,7 +6,7 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/server"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistance/postgres/account"
-	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistance/postgres/address_book_entry"
+	addressBookEntry "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistance/postgres/addressbook/entry"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistance/postgres/block"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistance/postgres/transaction"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/services"
@@ -23,7 +23,7 @@ func NewBlockchainRouter(network *types.NetworkIdentifier, asserter *asserter.As
 	blockRepo := block.NewBlockRepository(dbClient)
 	transactionRepo := transaction.NewTransactionRepository(dbClient)
 	accountRepo := account.NewAccountRepository(dbClient)
-	addressBookEntryRepo := address_book_entry.NewAddressBookEntryRepository(dbClient)
+	addressBookEntryRepo := addressBookEntry.NewAddressBookEntryRepository(dbClient)
 
 	commons := services.NewCommons(blockRepo, transactionRepo)
 
