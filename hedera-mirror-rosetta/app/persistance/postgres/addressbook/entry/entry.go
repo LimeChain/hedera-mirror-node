@@ -9,7 +9,10 @@ import (
 )
 
 const (
-	latestAddressBookEntries  = "SELECT abe.* FROM %s AS abe JOIN %s AS ab ON ab.start_consensus_timestamp = abe.consensus_timestamp WHERE ab.end_consensus_timestamp IS NULL"
+	latestAddressBookEntries = "SELECT abe.* FROM %s AS abe JOIN %s AS ab ON ab.start_consensus_timestamp = abe.consensus_timestamp WHERE ab.end_consensus_timestamp IS NULL"
+)
+
+const (
 	tableNameAddressBook      = "address_book"
 	tableNameAddressBookEntry = "address_book_entry"
 )
