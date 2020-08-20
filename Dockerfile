@@ -18,7 +18,7 @@ RUN cd hedera-mirror-node && ./mvnw clean package -DskipTests
 
 FROM ubuntu:18.04 as runner
 
-# ----------------------------- PosgreSQL ----------------------------- #
+# ----------------------------- PostgreSQL ----------------------------- #
 # Add the PostgreSQL PGP key to verify their Debian packages.
 # It should be the same key as https://www.postgresql.org/media/keys/ACCC4CF8.asc
 RUN apt-get update && apt-get install -y gnupg
