@@ -127,6 +127,7 @@ func (c *ConstructionService) ConstructionParse(ctx context.Context, request *rT
 			signers = append(signers, hex.EncodeToString(signaturePair.PubKeyPrefix))
 		}
 	}
+
 	return &rTypes.ConstructionParseResponse{
 		Operations: operations,
 		Signers:    signers,
