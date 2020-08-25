@@ -6,31 +6,29 @@ import (
 
 // Errors - map of all Errors that this API can return
 var Errors = map[string]*types.Error{
-	AppendSignatureFailed:          New(AppendSignatureFailed, 100, false),
-	AccountNotFound:                New(AccountNotFound, 101, true),
-	BlockNotFound:                  New(BlockNotFound, 102, true),
-	InvalidAccount:                 New(InvalidAccount, 103, false),
-	InvalidAmount:                  New(InvalidAmount, 104, false),
-	InvalidOperationsAmount:        New(InvalidOperationsAmount, 105, false),
-	InvalidOperationsTotalAmount:   New(InvalidOperationsTotalAmount, 106, false),
-	InvalidPublicKey:               New(InvalidPublicKey, 107, false),
-	InvalidSignatureVerification:   New(InvalidSignatureVerification, 108, false),
-	InvalidTransactionIdentifier:   New(InvalidTransactionIdentifier, 109, false),
-	MultipleOperationTypesPresent:  New(MultipleOperationTypesPresent, 110, false),
-	MultipleSignaturesPresent:      New(MultipleSignaturesPresent, 111, false),
-	NotImplemented:                 New(NotImplemented, 112, false),
-	StartMustBeBeforeEnd:           New(StartMustBeBeforeEnd, 113, false),
-	TransactionBuildFailed:         New(TransactionBuildFailed, 114, false),
-	TransactionDecodeFailed:        New(TransactionDecodeFailed, 115, false),
-	TransactionRecordFetchFailed:   New(TransactionRecordFetchFailed, 116, false),
-	TransactionMarshallingFailed:   New(TransactionMarshallingFailed, 117, false),
-	TransactionUnmarshallingFailed: New(TransactionUnmarshallingFailed, 118, false),
-	TransactionSubmissionFailed:    New(TransactionSubmissionFailed, 119, false),
-	TransactionNotFound:            New(TransactionNotFound, 120, true),
+	AccountNotFound:                New(AccountNotFound, 100, true),
+	BlockNotFound:                  New(BlockNotFound, 101, true),
+	InvalidAccount:                 New(InvalidAccount, 102, false),
+	InvalidAmount:                  New(InvalidAmount, 103, false),
+	InvalidOperationsAmount:        New(InvalidOperationsAmount, 104, false),
+	InvalidOperationsTotalAmount:   New(InvalidOperationsTotalAmount, 105, false),
+	InvalidPublicKey:               New(InvalidPublicKey, 106, false),
+	InvalidSignatureVerification:   New(InvalidSignatureVerification, 107, false),
+	InvalidTransactionIdentifier:   New(InvalidTransactionIdentifier, 108, false),
+	MultipleOperationTypesPresent:  New(MultipleOperationTypesPresent, 109, false),
+	MultipleSignaturesPresent:      New(MultipleSignaturesPresent, 110, false),
+	NotImplemented:                 New(NotImplemented, 111, false),
+	StartMustBeBeforeEnd:           New(StartMustBeBeforeEnd, 112, false),
+	TransactionBuildFailed:         New(TransactionBuildFailed, 113, false),
+	TransactionDecodeFailed:        New(TransactionDecodeFailed, 114, false),
+	TransactionRecordFetchFailed:   New(TransactionRecordFetchFailed, 115, false),
+	TransactionMarshallingFailed:   New(TransactionMarshallingFailed, 116, false),
+	TransactionUnmarshallingFailed: New(TransactionUnmarshallingFailed, 117, false),
+	TransactionSubmissionFailed:    New(TransactionSubmissionFailed, 118, false),
+	TransactionNotFound:            New(TransactionNotFound, 129, true),
 }
 
 const (
-	AppendSignatureFailed          string = "Combine unsigned transaction with signature failed"
 	AccountNotFound                string = "Account not found"
 	BlockNotFound                  string = "Block not found"
 	CreateAccountDbIdFailed        string = "Cannot create Account ID from encoded DB ID: %x"
