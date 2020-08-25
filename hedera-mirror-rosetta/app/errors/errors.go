@@ -25,7 +25,7 @@ var Errors = map[string]*types.Error{
 	TransactionMarshallingFailed:   New(TransactionMarshallingFailed, 116, false),
 	TransactionUnmarshallingFailed: New(TransactionUnmarshallingFailed, 117, false),
 	TransactionSubmissionFailed:    New(TransactionSubmissionFailed, 118, false),
-	TransactionNotFound:            New(TransactionNotFound, 129, true),
+	TransactionNotFound:            New(TransactionNotFound, 119, true),
 }
 
 const (
