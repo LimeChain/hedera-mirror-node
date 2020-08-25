@@ -1,7 +1,7 @@
 name: Rosetta Validation
 
 on: 
-  - commit
+  - push
 
 jobs:
   validate:
