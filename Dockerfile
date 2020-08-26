@@ -54,10 +54,8 @@ RUN echo "host    all             all             172.17.0.1/16           trust"
 
 USER root
 
-# Create Volume directory
-RUN mkdir /data
 # Create Volume PostgreSQL directory and Change default PostgreSQL directory
-RUN mkdir /data/db
+RUN mkdir -p /data/db
 RUN chown postgres /data/db
 RUN chmod 700 /data/db
 RUN mv /var/lib/postgresql/9.6/main /data/db/main
@@ -69,7 +67,7 @@ RUN ln -s /data/db/main /var/lib/postgresql/9.6/main
 RUN git clone https://github.com/LimeChain/hedera-mirror-node.git
 
 # Create Volume importer directory
-RUN mkdir /data/data
+RUN mkdir -p /data/data
 RUN ln -s /data/data /hedera-mirror-node
 
 # Copy & npm install the REST API
