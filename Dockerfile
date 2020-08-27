@@ -35,6 +35,13 @@ RUN apt-get update && apt-get install -y postgresql-9.6 postgresql-client-9.6 po
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 RUN apt-get install -y nodejs
 
+# ---------------------------- Install yq ----------------------------- #
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CC86BB64
+RUN apt-get install -y software-properties-common
+RUN add-apt-repository ppa:rmescandon/yq
+RUN apt update
+RUN apt install yq -y
+
 USER postgres
 
 # TODO use the init db script and not hardcoded values!
@@ -95,4 +102,4 @@ WORKDIR /hedera-mirror-node
 # Expose the ports
 # (DB)(Rosetta)(Rest)(GRPC)
 EXPOSE 5432 5700 5551 5600
-ENTRYPOINT [ "supervisord" ]
+ENTRYPOINT [ "./run_supervisord.sh" ]
