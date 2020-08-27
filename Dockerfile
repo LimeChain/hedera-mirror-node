@@ -42,8 +42,6 @@ RUN add-apt-repository ppa:rmescandon/yq
 RUN apt update
 RUN apt install yq -y
 
-USER postgres
-
 # And add ``listen_addresses`` to ``/etc/postgresql/9.6/main/postgresql.conf``
 RUN echo "listen_addresses='*'" >> /etc/postgresql/9.6/main/postgresql.conf
 # Allow PG Admin access
