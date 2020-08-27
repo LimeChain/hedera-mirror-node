@@ -1,7 +1,6 @@
 #!/bin/bash
 
 function run_offline_mode() {
-  export HEDERA_MIRROR_ROSETTA_NETWORK=$NETWORK
   supervisord --configuration supervisord-offline.conf
 }
 
