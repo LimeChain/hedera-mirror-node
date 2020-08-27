@@ -44,16 +44,6 @@ RUN apt install yq -y
 
 USER postgres
 
-# TODO use the init db script and not hardcoded values!
-RUN    /etc/init.d/postgresql start &&\
-    psql --command "create user mirror_grpc WITH password 'mirror_grpc_pass';" &&\
-    psql --command "create user mirror_node with SUPERUSER password 'mirror_node_pass'" &&\
-    createdb -O mirror_grpc mirror_node &&\
-    psql --command "grant connect on database mirror_node to mirror_grpc;" &&\
-    psql --command "alter default privileges in schema public grant select on tables to mirror_grpc;" &&\
-    psql --command "grant select on all tables in schema public to mirror_grpc;"
-
-
 # And add ``listen_addresses`` to ``/etc/postgresql/9.6/main/postgresql.conf``
 RUN echo "listen_addresses='*'" >> /etc/postgresql/9.6/main/postgresql.conf
 # Allow PG Admin access
@@ -72,6 +62,16 @@ RUN ln -s /data/db/main /var/lib/postgresql/9.6/main
 
 # Clone the Repo
 RUN git clone https://github.com/LimeChain/hedera-mirror-node.git
+
+USER postgres
+
+# Init db script
+RUN /etc/init.d/postgresql start &&\
+    createdb mirror_node &&\
+    psql --command "create user mirror_node with SUPERUSER password 'mirror_node_pass'"&&\
+    POSTGRES_DB=mirror_node /hedera-mirror-node/hedera-mirror-grpc/scripts/db/init.sh
+
+USER root
 
 # Create Volume importer directory
 RUN mkdir -p /data/data
@@ -99,6 +99,8 @@ COPY --from=java-builder /hedera-mirror-node/hedera-mirror-grpc/src/main/resourc
 
 WORKDIR /hedera-mirror-node
 
+COPY ./run_supervisord.sh .
+COPY ./supervisord-offline.conf .
 # Expose the ports
 # (DB)(Rosetta)(Rest)(GRPC)
 EXPOSE 5432 5700 5551 5600
