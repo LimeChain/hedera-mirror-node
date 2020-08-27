@@ -99,8 +99,6 @@ COPY --from=java-builder /hedera-mirror-node/hedera-mirror-grpc/src/main/resourc
 
 WORKDIR /hedera-mirror-node
 
-COPY ./run_supervisord.sh .
-COPY ./supervisord-offline.conf .
 # Expose the ports
 # (DB)(Rosetta)(Rest)(GRPC)
 EXPOSE 5432 5700 5551 5600
