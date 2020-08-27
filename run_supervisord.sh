@@ -25,18 +25,25 @@ function run_online_mode() {
     yq write -i application.yml hedera.mirror.importer.downloader.secretKey $HEDERA_MIRROR_IMPORTER_DOWNLOADER_SECRET_KEY
   fi
 
-  if [[ -n "$HEDERA_MIRROR_IMPORTER_NETWORK" ]]; then
-    yq write -i application.yml hedera.mirror.importer.network $HEDERA_MIRROR_IMPORTER_NETWORK
-  fi
-
   supervisord
 }
 
-case $MODE in
+function main() {
+  if [[ -n "$NETWORK" ]]; then
+    yq write -i application.yml hedera.mirror.importer.network $NETWORK
+    export HEDERA_MIRROR_ROSETTA_NETWORK=$NETWORK
+  fi
+
+  cat application.yml
+
+  case $MODE in
     "offline")
       run_offline_mode
     ;;
     *)
       run_online_mode
     ;;
-esac
+  esac
+}
+
+main
