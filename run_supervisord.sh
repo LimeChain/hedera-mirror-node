@@ -34,8 +34,6 @@ function main() {
     export HEDERA_MIRROR_ROSETTA_NETWORK=$NETWORK
   fi
 
-  cat application.yml
-
   case $MODE in
     "offline")
       run_offline_mode
