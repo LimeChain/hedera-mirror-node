@@ -42,11 +42,6 @@ RUN add-apt-repository ppa:rmescandon/yq
 RUN apt update
 RUN apt install yq -y
 
-# And add ``listen_addresses`` to ``/etc/postgresql/9.6/main/postgresql.conf``
-RUN echo "listen_addresses='*'" >> /etc/postgresql/9.6/main/postgresql.conf
-# Allow PG Admin access
-RUN echo "host    all             all             172.17.0.1/16           trust" >> /etc/postgresql/9.6/main/pg_hba.conf
-
 USER root
 
 # Create Volume PostgreSQL directory and Change default PostgreSQL directory
@@ -68,6 +63,11 @@ RUN /etc/init.d/postgresql start &&\
     createdb mirror_node &&\
     psql --command "create user mirror_node with SUPERUSER password 'mirror_node_pass'"&&\
     POSTGRES_DB=mirror_node /hedera-mirror-node/hedera-mirror-grpc/scripts/db/init.sh
+
+# And add ``listen_addresses`` to ``/etc/postgresql/9.6/main/postgresql.conf``
+RUN echo "listen_addresses='*'" >> /etc/postgresql/9.6/main/postgresql.conf
+# Allow PG Admin access
+RUN echo "host    all             all             172.17.0.1/16           trust" >> /etc/postgresql/9.6/main/pg_hba.conf
 
 USER root
 
