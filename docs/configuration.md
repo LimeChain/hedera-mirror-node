@@ -259,7 +259,7 @@ The following table lists the available properties along with their default valu
 
 | Name                                                    | Default                 | Description                                                                                    |
 | ------------------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------- |
-| `hedera.mirror.rosetta.apiVersion`                      | 1.4.2                   | The version of the Rosetta interface the implementation adheres to                             |
+| `hedera.mirror.rosetta.apiVersion`                      | 1.4.4                   | The version of the Rosetta interface the implementation adheres to                             |
 | `hedera.mirror.rosetta.db.host`                         | 127.0.0.1               | The IP or hostname used to connect to the database                                             |
 | `hedera.mirror.rosetta.db.name`                         | mirror_node             | The name of the database                                                                       |
 | `hedera.mirror.rosetta.db.password`                     | mirror_node_pass        | The database password the processor uses to connect. **Should be changed from default**        |
