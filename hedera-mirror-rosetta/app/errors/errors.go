@@ -18,7 +18,7 @@ var Errors = map[string]*types.Error{
 	MultipleOperationTypesPresent:  New(MultipleOperationTypesPresent, 109, false),
 	MultipleSignaturesPresent:      New(MultipleSignaturesPresent, 110, false),
 	NotImplemented:                 New(NotImplemented, 111, false),
-	StartMustBeBeforeEnd:           New(StartMustBeBeforeEnd, 112, false),
+	StartMustNotBeAfterEnd:         New(StartMustNotBeAfterEnd, 112, false),
 	TransactionBuildFailed:         New(TransactionBuildFailed, 113, false),
 	TransactionDecodeFailed:        New(TransactionDecodeFailed, 114, false),
 	TransactionRecordFetchFailed:   New(TransactionRecordFetchFailed, 115, false),
@@ -42,7 +42,7 @@ const (
 	MultipleOperationTypesPresent  string = "Only one Operation Type must be present"
 	MultipleSignaturesPresent      string = "Only one signature must be present"
 	NotImplemented                 string = "Not implemented"
-	StartMustBeBeforeEnd           string = "Start must be before end"
+	StartMustNotBeAfterEnd         string = "Start must not be after end"
 	TransactionBuildFailed         string = "Transaction build failed"
 	TransactionDecodeFailed        string = "Transaction Decode failed"
 	TransactionRecordFetchFailed   string = "Transaction record fetch failed"
