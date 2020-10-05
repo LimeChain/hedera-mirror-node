@@ -103,17 +103,10 @@ func (tr *TransactionRepository) TypesAsArray() []string {
 	return maphelper.GetStringValuesFromIntStringMap(tr.Types())
 }
 
-// FindByTimestamp retrieves Transaction by given timestamp
-func (tr *TransactionRepository) FindByTimestamp(timestamp int64) *types.Transaction {
-	t := transaction{}
-	tr.dbClient.Find(&t, timestamp)
-	return tr.constructTransaction([]transaction{t})
-}
-
 // FindBetween retrieves all Transactions between the provided start and end timestamp
 func (tr *TransactionRepository) FindBetween(start int64, end int64) ([]*types.Transaction, *rTypes.Error) {
 	if start > end {
-		return nil, errors.Errors[errors.StartMustBeBeforeEnd]
+		return nil, errors.Errors[errors.StartMustNotBeAfterEnd]
 	}
 	var transactions []transaction
 	tr.dbClient.Where(whereClauseBetweenConsensus, start, end).Find(&transactions)
