@@ -60,15 +60,15 @@ func AccountFromString(account string) (*Account, *rTypes.Error) {
 		return nil, errors.Errors[errors.InvalidAccount]
 	}
 
-	shard, err := parse.ToInt(inputs[0])
+	shard, err := parse.ToInt64(inputs[0])
 	if err != nil {
 		return nil, errors.Errors[errors.InvalidAccount]
 	}
-	realm, err := parse.ToInt(inputs[1])
+	realm, err := parse.ToInt64(inputs[1])
 	if err != nil {
 		return nil, errors.Errors[errors.InvalidAccount]
 	}
-	number, err := parse.ToInt(inputs[2])
+	number, err := parse.ToInt64(inputs[2])
 	if err != nil {
 		return nil, errors.Errors[errors.InvalidAccount]
 	}

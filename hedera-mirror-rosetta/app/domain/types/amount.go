@@ -14,7 +14,7 @@ type Amount struct {
 
 // FromRosettaAmount populates domain type Amount from Rosetta type Amount
 func FromRosettaAmount(rAmount *rTypes.Amount) (*Amount, *rTypes.Error) {
-	amount, err := parse.ToInt(rAmount.Value)
+	amount, err := parse.ToInt64(rAmount.Value)
 	if err != nil {
 		return nil, errors.Errors[errors.InvalidAmount]
 	}
