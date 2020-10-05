@@ -43,7 +43,7 @@ type transactionType struct {
 	Name    string `gorm:"size:30"`
 }
 
-type transactionStatus struct {
+type transactionResult struct {
 	ProtoID int    `gorm:"type:integer;primary_key"`
 	Result  string `gorm:"size:100"`
 }
@@ -58,8 +58,8 @@ func (transactionType) TableName() string {
 	return "t_transaction_types"
 }
 
-// TableName - Set table name of the Transaction Statuses to be `t_transaction_results`
-func (transactionStatus) TableName() string {
+// TableName - Set table name of the Transaction Results to be `t_transaction_results`
+func (transactionResult) TableName() string {
 	return "t_transaction_results"
 }
 
@@ -72,7 +72,7 @@ type TransactionRepository struct {
 	dbClient *gorm.DB
 }
 
-// NewTransactionRepository creates an instance of a TransactionRepository struct. Populates the transaction types and statuses on init
+// NewTransactionRepository creates an instance of a TransactionRepository struct
 func NewTransactionRepository(dbClient *gorm.DB) *TransactionRepository {
 	return &TransactionRepository{dbClient: dbClient}
 }
@@ -88,15 +88,15 @@ func (tr *TransactionRepository) Types() map[int]string {
 	return tMap
 }
 
-// Statuses returns map of all Transaction Statuses
+// Statuses returns map of all Transaction Results
 // TODO implement cache instead of retrieving this everytime form DB
 func (tr *TransactionRepository) Statuses() map[int]string {
-	statusesArray := tr.retrieveTransactionStatuses()
-	sMap := make(map[int]string)
-	for _, s := range statusesArray {
-		sMap[s.ProtoID] = s.Result
+	rArray := tr.retrieveTransactionResults()
+	rMap := make(map[int]string)
+	for _, s := range rArray {
+		rMap[s.ProtoID] = s.Result
 	}
-	return sMap
+	return rMap
 }
 
 func (tr *TransactionRepository) TypesAsArray() []string {
@@ -158,10 +158,10 @@ func (tr *TransactionRepository) retrieveTransactionTypes() []transactionType {
 	return transactionTypes
 }
 
-func (tr *TransactionRepository) retrieveTransactionStatuses() []transactionStatus {
-	var statuses []transactionStatus
-	tr.dbClient.Find(&statuses)
-	return statuses
+func (tr *TransactionRepository) retrieveTransactionResults() []transactionResult {
+	var tResults []transactionResult
+	tr.dbClient.Find(&tResults)
+	return tResults
 }
 
 func (tr *TransactionRepository) constructTransaction(sameHashTransactions []transaction) *types.Transaction {
