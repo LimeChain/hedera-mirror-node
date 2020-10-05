@@ -1,5 +1,6 @@
-# This Dockerfile configuration is used to build and run
+# This Dockerfile configuration is used to build
 # Importer, Rosetta and PostgreSQL into one image
+# and run the services using supervisord
 
 # ------------------------------  Rosetta  ------------------------------- #
 FROM golang:1.13 as rosetta-builder
