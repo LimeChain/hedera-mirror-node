@@ -5,6 +5,7 @@ import (
 	"fmt"
 	dbTypes "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistence/postgres/common"
 	hexUtils "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/hex"
+	"log"
 	"strconv"
 	"strings"
 
@@ -118,7 +119,11 @@ func (tr *TransactionRepository) FindBetween(start int64, end int64) ([]*types.T
 	}
 	res := make([]*types.Transaction, 0, len(sameHashMap))
 	for _, sameHashTransactions := range sameHashMap {
-		res = append(res, tr.constructTransaction(sameHashTransactions))
+		transaction, err := tr.constructTransaction(sameHashTransactions)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, transaction)
 	}
 	return res, nil
 }
@@ -137,7 +142,11 @@ func (tr *TransactionRepository) FindByHashInBlock(hashStr string, consensusStar
 		return nil, errors.Errors[errors.TransactionNotFound]
 	}
 
-	return tr.constructTransaction(transactions), nil
+	transaction, err1 := tr.constructTransaction(transactions)
+	if err1 != nil {
+		return nil, err1
+	}
+	return transaction, nil
 }
 
 // filterTransactionsForRange - Filters the passed transactions. If the ConnsensusNS is not in the given [consensusStart; consensusEnd] range, the transaction is removed from the list
@@ -172,7 +181,7 @@ func (tr *TransactionRepository) retrieveTransactionResults() []transactionResul
 	return tResults
 }
 
-func (tr *TransactionRepository) constructTransaction(sameHashTransactions []transaction) *types.Transaction {
+func (tr *TransactionRepository) constructTransaction(sameHashTransactions []transaction) (*types.Transaction, *rTypes.Error) {
 	tResult := &types.Transaction{Hash: sameHashTransactions[0].getHashString()}
 
 	transactionsMap := make(map[int64]transaction)
@@ -182,32 +191,39 @@ func (tr *TransactionRepository) constructTransaction(sameHashTransactions []tra
 		timestamps[i] = t.ConsensusNS
 	}
 	cryptoTransfers := tr.findCryptoTransfers(timestamps)
-	operations := tr.constructOperations(cryptoTransfers, transactionsMap)
+	operations, err := tr.constructOperations(cryptoTransfers, transactionsMap)
+	if err != nil {
+		return nil, err
+	}
 	tResult.Operations = operations
 
-	return tResult
+	return tResult, nil
 }
 
-func (tr *TransactionRepository) constructOperations(cryptoTransfers []dbTypes.CryptoTransfer, transactionsMap map[int64]transaction) []*types.Operation {
+func (tr *TransactionRepository) constructOperations(cryptoTransfers []dbTypes.CryptoTransfer, transactionsMap map[int64]transaction) ([]*types.Operation, *rTypes.Error) {
 	transactionTypes := tr.Types()
 	transactionStatuses := tr.Statuses()
 
 	operations := make([]*types.Operation, len(cryptoTransfers))
 	for i, ct := range cryptoTransfers {
-		a := constructAccount(ct.EntityID)
+		a, err := constructAccount(ct.EntityID)
+		if err != nil {
+			return nil, err
+		}
 		operationType := transactionTypes[transactionsMap[ct.ConsensusTimestamp].Type]
 		operationStatus := transactionStatuses[transactionsMap[ct.ConsensusTimestamp].Result]
 		operations[i] = &types.Operation{Index: int64(i), Type: operationType, Status: operationStatus, Account: a, Amount: &types.Amount{Value: ct.Amount}}
 	}
-	return operations
+	return operations, nil
 }
 
-func constructAccount(encodedID int64) *types.Account {
+func constructAccount(encodedID int64) (*types.Account, *rTypes.Error) {
 	acc, err := types.NewAccountFromEncodedID(encodedID)
 	if err != nil {
-		panic(fmt.Sprintf(errors.CreateAccountDbIdFailed, encodedID))
+		log.Printf(errors.CreateAccountDbIdFailed, encodedID)
+		return nil, errors.Errors[errors.InternalServerError]
 	}
-	return acc
+	return acc, nil
 }
 
 func intsToString(ints []int64) string {
