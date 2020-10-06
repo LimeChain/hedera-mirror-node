@@ -1,7 +1,6 @@
 package transaction
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -32,12 +31,9 @@ func TestFilterTransactionsForRange(t *testing.T) {
 	}
 
 	for i, tt := range testData {
-		testName := fmt.Sprintf("Filter Transaction Test %d", i)
-		t.Run(testName, func(t *testing.T) {
-			res := filterTransactionsForRange(tt.transactions, tt.consensusStart, tt.consensusEnd)
-			if !reflect.DeepEqual(res, expectedTransactions[i].transactions) {
-				t.Errorf("Got %d, expected %d", res, expectedTransactions[i].transactions)
-			}
-		})
+		res := filterTransactionsForRange(tt.transactions, tt.consensusStart, tt.consensusEnd)
+		if !reflect.DeepEqual(res, expectedTransactions[i].transactions) {
+			t.Errorf("Got %d, expected %d", res, expectedTransactions[i].transactions)
+		}
 	}
 }
