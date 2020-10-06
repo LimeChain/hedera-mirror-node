@@ -21,13 +21,14 @@ func NewCommons(blockRepo repositories.BlockRepository, transactionRepo reposito
 	}
 }
 
+// RetrieveBlock - Retrieves Block by a given PartialBlockIdentifier
 func (c *Commons) RetrieveBlock(bIdentifier *rTypes.PartialBlockIdentifier) (*types.Block, *rTypes.Error) {
-	if bIdentifier.Hash != nil && bIdentifier.Index != nil {
+	if bIdentifier.Hash != nil && bIdentifier.Index != nil { // != nil != nil --------- nil & !nil ------ !nil & nil ---- nil & nil
 		h := hex.SafeRemoveHexPrefix(*bIdentifier.Hash)
 		return c.blockRepo.FindByIdentifier(*bIdentifier.Index, h)
-	} else if bIdentifier.Hash == nil {
+	} else if bIdentifier.Hash == nil && bIdentifier.Index != nil {
 		return c.blockRepo.FindByIndex(*bIdentifier.Index)
-	} else if bIdentifier.Index == nil {
+	} else if bIdentifier.Index == nil && bIdentifier.Hash != nil {
 		h := hex.SafeRemoveHexPrefix(*bIdentifier.Hash)
 		return c.blockRepo.FindByHash(h)
 	} else {
