@@ -1,7 +1,7 @@
 name: Rosetta Validation
 
-on: 
-  - pull_request
+on:
+  - push
 
 jobs:
   validate:
@@ -9,6 +9,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
+    - name: Override Mirror Node Importer StartDate
+      uses: mikefarah/yq@3.4.0
+      with:
+        cmd: "yq write -i application.yml hedera.mirror.importer.startDate 2019-10-11"
 
     - name: Run Rosetta Mirror Node
       run: docker-compose up --build -d
