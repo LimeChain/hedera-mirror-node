@@ -6,7 +6,7 @@ if rosetta-cli | grep -q 'CLI for the Rosetta API'; then
     echo Rosetta CLI already installed. Skipping installation.
 else
     echo Installing Rosetta CLI...
-    curl -sSfL https://raw.githubusercontent.com/coinbase/rosetta-cli/master/scripts/install.sh | sh -s
+    curl -sSfL https://raw.githubusercontent.com/coinbase/rosetta-cli/master/scripts/install.sh | sh -s -- -b .
 fi
 
 network="$1"
