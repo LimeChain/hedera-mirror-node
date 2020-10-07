@@ -1,6 +1,7 @@
 #!/bin/bash
 
 counter=0
+sleep 60
 while [  $counter -lt 120 ];
   do sleep 1
   response=$(curl -sL -w "%{http_code}" -d '{"metadata":{}}' -i "http://localhost:5700/network/list")
