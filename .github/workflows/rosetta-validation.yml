@@ -14,8 +14,6 @@ jobs:
       uses: mikefarah/yq@3.4.0
       with:
         cmd: yq write -i application.yml hedera.mirror.importer.startDate 2019-10-11T00:00:00.000000Z
-    - name: cat
-      run: cat application.yml
 
     - name: Run Rosetta Mirror Node
       run: docker-compose up --build -d
