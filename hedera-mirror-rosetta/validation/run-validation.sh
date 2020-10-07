@@ -2,7 +2,7 @@
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 cd "$parent_path"
 
-if rosetta-cli | grep -q 'CLI for the Rosetta API'; then
+if ./rosetta-cli | grep -q 'CLI for the Rosetta API'; then
     echo Rosetta CLI already installed. Skipping installation.
 else
     echo Installing Rosetta CLI...
@@ -36,6 +36,7 @@ case $network in
     ;;
     *)
         network="demo"
+        echo $network
         run_demo
     ;;
 esac
