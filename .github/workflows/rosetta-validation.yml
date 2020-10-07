@@ -1,7 +1,7 @@
 name: Rosetta Validation
 
 on:
-  - push
+  - pull_request
 
 jobs:
   validate:
