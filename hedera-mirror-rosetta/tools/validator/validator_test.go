@@ -17,14 +17,13 @@ func TestValidateOperationsSum(t *testing.T) {
 		operationDummy2,
 	}
 
-	var expectedNil *types.Error = nil
 	expectedError := errors.Errors[errors.InvalidOperationsTotalAmount]
 
 	// when:
 	result := ValidateOperationsSum(testData)
 
 	// then:
-	assert.Equal(t, expectedNil, result)
+	assert.Equal(t, nil, result)
 
 	// and:
 	testData = append(testData, operationDummy2)

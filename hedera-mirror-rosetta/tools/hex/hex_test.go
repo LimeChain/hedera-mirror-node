@@ -18,7 +18,7 @@ func TestAddsPrefixCorrectly(t *testing.T) {
 		{"0x123aasd"},
 	}
 
-	var assertData = []struct {
+	var expectedData = []struct {
 		result string
 	}{
 		{"0xaddprefix"},
@@ -34,7 +34,7 @@ func TestAddsPrefixCorrectly(t *testing.T) {
 		result := SafeAddHexPrefix(tt.string)
 
 		// then:
-		assert.Equal(t, result, assertData[i].result)
+		assert.Equal(t, result, expectedData[i].result)
 	}
 }
 
@@ -53,7 +53,7 @@ func TestRemovesPrefixCorrectly(t *testing.T) {
 		{"0x234123"},
 	}
 
-	var assertData = []struct {
+	var expectedData = []struct {
 		result string
 	}{
 		{"addprefix"},
@@ -70,6 +70,6 @@ func TestRemovesPrefixCorrectly(t *testing.T) {
 		// when:
 		result := SafeRemoveHexPrefix(tt.string)
 		// then:
-		assert.Equal(t, result, assertData[i].result)
+		assert.Equal(t, result, expectedData[i].result)
 	}
 }
