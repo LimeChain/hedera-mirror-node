@@ -227,6 +227,7 @@ func (tr *TransactionRepository) constructOperations(cryptoTransfers []dbTypes.C
 	if err != nil {
 		return nil, err
 	}
+
 	transactionStatuses, err := tr.Statuses()
 	if err != nil {
 		return nil, err
