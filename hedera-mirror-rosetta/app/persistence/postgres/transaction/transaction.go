@@ -88,6 +88,7 @@ func (tr *TransactionRepository) Types() (map[int]string, *rTypes.Error) {
 
 	typesArray := tr.retrieveTransactionTypes()
 	if len(typesArray) == 0 {
+		log.Println("No Transaction Types were found in the database.")
 		return nil, errors.Errors[errors.OperationTypesNotFound]
 	}
 
@@ -106,6 +107,7 @@ func (tr *TransactionRepository) Statuses() (map[int]string, *rTypes.Error) {
 
 	rArray := tr.retrieveTransactionResults()
 	if len(rArray) == 0 {
+		log.Println("No Transaction Results were found in the database.")
 		return nil, errors.Errors[errors.OperationStatusesNotFound]
 	}
 
