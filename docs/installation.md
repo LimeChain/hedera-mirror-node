@@ -75,6 +75,19 @@ Run the unit tests using jest by using:
 npm test
 ```
 
+### Rosetta API
+
+#### Prerequisites
+``
+Go 1.13+
+``
+
+To start the Rosetta API ensure you have the necessary [configuration](configuration.md) populated and run:
+
+```
+go run cmd/*
+```
+
 ## Running via Docker Compose
 
 Docker Compose scripts are provided and run all the mirror node components:
