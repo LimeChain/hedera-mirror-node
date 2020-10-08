@@ -84,8 +84,18 @@ Go 1.13+
 
 To start the Rosetta API ensure you have the necessary [configuration](configuration.md) populated and run:
 
-```
+```console
+cd hedera-mirror-rosetta
 go run cmd/*
+```
+
+#### Rosetta CLI Validation
+
+After you have started the Rosetta API, in another terminal run:
+
+```console
+cd hedera-mirror-rosetta/validation
+./run-validation.sh
 ```
 
 ## Running via Docker Compose
