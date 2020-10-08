@@ -11,13 +11,16 @@ func TestValidateOperationsSum(t *testing.T) {
 	// given:
 	operationDummy := newOperationDummy("100")
 	operationDummy2 := newOperationDummy("-100")
+	invalidOperationDummy := newOperationDummy("-100H")
 
 	testData := []*types.Operation{
 		operationDummy,
 		operationDummy2,
 	}
 
-	expectedError := errors.Errors[errors.InvalidOperationsTotalAmount]
+	var nil *types.Error = nil
+	expectedInvalidOperationsTotalAmountError := errors.Errors[errors.InvalidOperationsTotalAmount]
+	expectedInvalidAmountError := errors.Errors[errors.InvalidAmount]
 
 	// when:
 	result := ValidateOperationsSum(testData)
@@ -30,7 +33,14 @@ func TestValidateOperationsSum(t *testing.T) {
 
 	// then:
 	result = ValidateOperationsSum(testData)
-	assert.Equal(t, expectedError, result)
+	assert.Equal(t, expectedInvalidOperationsTotalAmountError, result)
+
+	// and:
+	testData = append(testData, invalidOperationDummy)
+
+	// then:
+	result = ValidateOperationsSum(testData)
+	assert.Equal(t, expectedInvalidAmountError, result)
 }
 
 func newOperationDummy(amount string) *types.Operation {

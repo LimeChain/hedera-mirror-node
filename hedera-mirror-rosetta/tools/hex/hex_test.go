@@ -50,7 +50,7 @@ func TestRemovesPrefixCorrectly(t *testing.T) {
 		{"0x "},
 		{"0x123aasd"},
 		{"0xaasd"},
-		{"0x234123"},
+		{"234123"},
 	}
 
 	var expectedData = []struct {
