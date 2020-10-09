@@ -98,6 +98,12 @@ cd hedera-mirror-rosetta/validation
 ./run-validation.sh
 ```
 
+Currently, only **DEMO** and **TESTNET** networks for the Rosetta CLI Validation, where
+**DEMO** is the default and **TESTNET** can be run via:
+```console
+./run-validation.sh testnet
+```
+
 ## Running via Docker Compose
 
 Docker Compose scripts are provided and run all the mirror node components:
