@@ -26,6 +26,12 @@ import (
 	"testing"
 )
 
+func TestToRosettaAccount(t *testing.T) {
+	rosettaAccount := exampleAccount().ToRosettaAccount()
+
+	assert.Equal(t, expectedAccount(), rosettaAccount)
+}
+
 func TestNewAccountFromEncodedID(t *testing.T) {
 	// given:
 	var testData = []struct {
@@ -44,9 +50,7 @@ func TestNewAccountFromEncodedID(t *testing.T) {
 		res, _ := NewAccountFromEncodedID(tt.input)
 
 		// then:
-		assert.Equal(t, tt.shard, res.Shard)
-		assert.Equal(t, tt.realm, res.Realm)
-		assert.Equal(t, tt.number, res.Number)
+		assert.Equal(t, expectedAccountWith(tt.shard, tt.realm, tt.number), res)
 	}
 }
 
@@ -85,9 +89,7 @@ func TestAccountFromString(t *testing.T) {
 		res, _ := AccountFromString(tt.input)
 
 		// then:
-		assert.Equal(t, tt.shard, res.Shard)
-		assert.Equal(t, tt.realm, res.Realm)
-		assert.Equal(t, tt.number, res.Number)
+		assert.Equal(t, expectedAccountWith(tt.shard, tt.realm, tt.number), res)
 	}
 }
 
@@ -99,7 +101,7 @@ func TestAccountFromStringThrows(t *testing.T) {
 	}{
 		{"a.0.0", 0, 0, 0},
 		{"0.b.0", 0, 0, 10},
-		{"0.0.c", 0, 0, 4294967295},
+		{"0.0c", 0, 0, 4294967295},
 	}
 
 	var expectedNil *Account = nil

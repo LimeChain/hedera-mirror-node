@@ -21,21 +21,14 @@
 package types
 
 import (
-	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/config"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestToRosettaAmount(t *testing.T) {
-	// given:
-	exampleAmount := Amount{
-		int64(100),
-	}
-
 	// when:
-	result := exampleAmount.ToRosettaAmount()
+	result := exampleAmount().ToRosettaAmount()
 
 	// then:
-	assert.Equal(t, "100", result.Value)
-	assert.Equal(t, config.CurrencyHbar, result.Currency)
+	assert.Equal(t, expectedAmount(), result)
 }

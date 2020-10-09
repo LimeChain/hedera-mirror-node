@@ -26,50 +26,17 @@ import (
 )
 
 func TestToRosettaBlock(t *testing.T) {
-	// given:
-	exampleAccount, _ := AccountFromString("0.0.0")
-	exampleAmount := &Amount{Value: int64(400)}
-	exampleOperation := &Operation{
-		Index:   1,
-		Type:    "transfer",
-		Status:  "pending",
-		Account: exampleAccount,
-		Amount:  exampleAmount,
-	}
-	operations := make([]*Operation, 1)
-	operations[0] = exampleOperation
-	exampleTransaction := &Transaction{
-		Hash:       "somehash",
-		Operations: operations,
-	}
-	transactions := make([]*Transaction, 1)
-	transactions[0] = exampleTransaction
-	exampleBlock := &Block{
-		Index:               2,
-		Hash:                "somehash",
-		ConsensusStartNanos: 10000000,
-		ConsensusEndNanos:   12300000,
-		ParentIndex:         1,
-		ParentHash:          "someparenthash",
-		Transactions:        transactions,
-	}
-
 	// when:
-	rosettaBlockResult := exampleBlock.ToRosettaBlock()
+	rosettaBlockResult := exampleBlock().ToRosettaBlock()
 
 	// then:
-	assert.Equal(t, int64(10), rosettaBlockResult.Timestamp)
-	assert.Equal(t, "0xsomehash", rosettaBlockResult.BlockIdentifier.Hash)
-	assert.Equal(t, "0xsomeparenthash", rosettaBlockResult.ParentBlockIdentifier.Hash)
-	assert.Len(t, rosettaBlockResult.Transactions, 1)
-	assert.Equal(t, exampleTransaction.Hash, rosettaBlockResult.Transactions[0].TransactionIdentifier.Hash)
+	assert.Equal(t, expectedBlock(), rosettaBlockResult)
 }
 
 func TestGetTimestampMillis(t *testing.T) {
 	// given:
-	exampleBlock := &Block{
-		ConsensusStartNanos: 10000000,
-	}
+	exampleBlock := exampleBlock()
+	exampleBlock.ConsensusStartNanos = 10000000
 
 	// when:
 	resultMillis := exampleBlock.GetTimestampMillis()
