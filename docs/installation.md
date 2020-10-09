@@ -98,8 +98,8 @@ cd hedera-mirror-rosetta/validation
 ./run-validation.sh
 ```
 
-Currently, only **DEMO** and **TESTNET** networks for the Rosetta CLI Validation, where
-**DEMO** is the default and **TESTNET** can be run via:
+Currently, Rosetta CLI Validation supports only **DEMO** and **TESTNET**, where
+**DEMO** is default and **TESTNET** can be run via:
 ```console
 ./run-validation.sh testnet
 ```
