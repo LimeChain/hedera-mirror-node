@@ -31,8 +31,8 @@ const (
 	balanceChangeBetween string = `SELECT
                                         SUM(amount::bigint) AS value,
                                         COUNT(consensus_timestamp) AS number_of_transfers
-                                    FROM crypto_transfer
-                                    WHERE consensus_timestamp > ?
+                                  FROM crypto_transfer
+                                  WHERE consensus_timestamp > ?
                                         AND consensus_timestamp <= ?
                                         AND entity_id = ?`
 )
