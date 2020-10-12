@@ -22,7 +22,6 @@ package types
 
 import (
 	"github.com/coinbase/rosetta-sdk-go/types"
-	entityid "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/services/encoding"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -37,22 +36,8 @@ func exampleBlock() *Block {
 		ParentHash:          "someparenthash",
 		Transactions: []*Transaction{
 			{
-				Hash: "somehash",
-				Operations: []*Operation{
-					{
-						Index:  1,
-						Type:   "transfer",
-						Status: "pending",
-						Account: &Account{
-							entityid.EntityId{
-								ShardNum:  0,
-								RealmNum:  0,
-								EntityNum: 0,
-							},
-						},
-						Amount: &Amount{Value: int64(400)},
-					},
-				},
+				Hash:       "somehash",
+				Operations: []*Operation{},
 			},
 		},
 	}
@@ -72,7 +57,7 @@ func expectedBlock() *types.Block {
 		Transactions: []*types.Transaction{
 			{
 				TransactionIdentifier: &types.TransactionIdentifier{Hash: "somehash"},
-				Operations:            []*types.Operation{expectedOperation()},
+				Operations:            []*types.Operation{},
 				Metadata:              nil,
 			},
 		},

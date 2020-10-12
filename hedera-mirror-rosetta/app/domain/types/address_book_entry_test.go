@@ -18,7 +18,10 @@ func exampleAddressBookEntries() *AddressBookEntries {
 						EntityNum: 0,
 					},
 				},
-				Metadata: nil,
+				Metadata: map[string]interface{}{
+					"ip":   "123",
+					"port": "20514",
+				},
 			},
 		},
 	}
@@ -34,7 +37,10 @@ func expectedRosettaPeers() []*types.Peer {
 					EntityNum: 0,
 				},
 			}).String(),
-			Metadata: nil,
+			Metadata: map[string]interface{}{
+				"ip":   "123",
+				"port": "20514",
+			},
 		},
 	}
 }
