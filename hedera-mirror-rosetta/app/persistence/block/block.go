@@ -41,7 +41,7 @@ const (
                                             FROM   record_file
                                             WHERE  consensus_end = (SELECT MAX(consensus_end)
                                                                     FROM   record_file)) AS rd,
-                                           (SELECT COUNT(*) - 1 AS block_index
+                                           (SELECT COUNT(*) - 1 - ? AS block_index
                                             FROM   record_file) AS rcd_index`
 
 	// selectByHashWithIndex - Selects the row with a given file_hash and adds additional info about the position of that row using count.
@@ -59,6 +59,15 @@ const (
                                             WHERE  consensus_end <= (SELECT consensus_end
                                                                      FROM   record_file
                                                                      WHERE  file_hash = ?)) AS rcd`
+	// selectStartingRecordFileIndex - Selects the count of rows from the record_file table,
+	// where each one's consensus_end is before the MIN consensus_end of address_book table (the first one added).
+	// This way, record files before that timestamp are considered non-existent,
+	// and the first record_file (block) will be considered equal or bigger
+	// than the consensus_timestamp of the first account_balance
+	selectStartingRecordFileIndex string = `SELECT COUNT(*)
+                                            FROM record_file
+                                            WHERE consensus_end < (SELECT MIN(consensus_timestamp)
+                                            FROM account_balance)`
 )
 
 type recordFile struct {
@@ -80,7 +89,8 @@ func (recordFile) TableName() string {
 
 // BlockRepository struct that has connection to the Database
 type BlockRepository struct {
-	dbClient *gorm.DB
+	dbClient                *gorm.DB
+	recordFileStartingIndex *int64
 }
 
 // NewBlockRepository creates an instance of a BlockRepository struct
@@ -90,8 +100,12 @@ func NewBlockRepository(dbClient *gorm.DB) *BlockRepository {
 
 // FindByIndex retrieves a block by given Index
 func (br *BlockRepository) FindByIndex(index int64) (*types.Block, *rTypes.Error) {
+	startingIndex, err := br.getRecordFileStartingIndex()
+	if err != nil {
+		return nil, errors.Errors[errors.BlockNotFound]
+	}
 	rf := &recordFile{}
-	if br.dbClient.Order("consensus_end asc").Offset(index).First(rf).RecordNotFound() {
+	if br.dbClient.Order("consensus_end asc").Offset(index + *startingIndex).First(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
 	}
 
@@ -122,8 +136,12 @@ func (br *BlockRepository) FindByIdentifier(index int64, hash string) (*types.Bl
 
 // RetrieveGenesis retrieves the genesis block
 func (br *BlockRepository) RetrieveGenesis() (*types.Block, *rTypes.Error) {
+	startingIndex, err := br.getRecordFileStartingIndex()
+	if err != nil {
+		return nil, errors.Errors[errors.BlockNotFound]
+	}
 	rf := &recordFile{}
-	if br.dbClient.Where(&recordFile{PrevHash: genesisPreviousHash}).Find(rf).RecordNotFound() {
+	if br.dbClient.Offset(*startingIndex).Limit(1).Find(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
 	}
 
@@ -137,8 +155,12 @@ func (br *BlockRepository) RetrieveGenesis() (*types.Block, *rTypes.Error) {
 
 // RetrieveLatest retrieves the latest block
 func (br *BlockRepository) RetrieveLatest() (*types.Block, *rTypes.Error) {
+	startingIndex, err := br.getRecordFileStartingIndex()
+	if err != nil {
+		return nil, errors.Errors[errors.BlockNotFound]
+	}
 	rf := &recordFile{}
-	if br.dbClient.Raw(selectLatestWithIndex).Scan(rf).RecordNotFound() {
+	if br.dbClient.Raw(selectLatestWithIndex, *startingIndex).Scan(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
 	}
 
@@ -146,10 +168,20 @@ func (br *BlockRepository) RetrieveLatest() (*types.Block, *rTypes.Error) {
 }
 
 func (br *BlockRepository) findRecordFileByHash(hash string) (*recordFile, *rTypes.Error) {
+	startingIndex, err := br.getRecordFileStartingIndex()
+	if err != nil {
+		return nil, errors.Errors[errors.BlockNotFound]
+	}
 	rf := &recordFile{}
 	if br.dbClient.Raw(selectByHashWithIndex, hash, hash).Scan(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
 	}
+
+	rf.BlockIndex = rf.BlockIndex - *startingIndex
+	if rf.BlockIndex < 0 {
+		return nil, errors.Errors[errors.BlockNotFound]
+	}
+
 	return rf, nil
 }
 
@@ -159,8 +191,8 @@ func (br *BlockRepository) constructBlockResponse(rf *recordFile, blockIndex int
 	parentHash := rf.PrevHash
 
 	// Handle the edge case for querying first block
-	if rf.PrevHash == genesisPreviousHash {
-		parentIndex = 0          //Parent index should be 0, same as current block index
+	if rf.PrevHash == genesisPreviousHash || parentIndex < 0 {
+		parentIndex = 0          // Parent index should be 0, same as current block index
 		parentHash = rf.FileHash // Parent hash should be same as current block hash
 	}
 	return &types.Block{
@@ -171,4 +203,13 @@ func (br *BlockRepository) constructBlockResponse(rf *recordFile, blockIndex int
 		ConsensusStartNanos: rf.ConsensusStart,
 		ConsensusEndNanos:   rf.ConsensusEnd,
 	}
+}
+
+func (br *BlockRepository) getRecordFileStartingIndex() (*int64, *rTypes.Error) {
+	if br.recordFileStartingIndex == nil {
+		if br.dbClient.Raw(selectStartingRecordFileIndex).Count(&br.recordFileStartingIndex).RecordNotFound() {
+			return nil, errors.Errors[errors.BlockNotFound]
+		}
+	}
+	return br.recordFileStartingIndex, nil
 }
