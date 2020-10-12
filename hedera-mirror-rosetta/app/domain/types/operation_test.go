@@ -22,45 +22,47 @@ package types
 
 import (
 	"github.com/coinbase/rosetta-sdk-go/types"
+	entityid "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/services/encoding"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/config"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func exampleOperation() *Operation {
 	return &Operation{
-		Index:   1,
-		Type:    "transfer",
-		Status:  "pending",
-		Account: exampleAccount(),
-		Amount:  exampleAmount(),
+		Index:  1,
+		Type:   "transfer",
+		Status: "pending",
+		Account: &Account{
+			entityid.EntityId{
+				ShardNum:  0,
+				RealmNum:  0,
+				EntityNum: 0,
+			},
+		},
+		Amount: &Amount{Value: int64(400)},
 	}
-}
-
-func exampleOperations() []*Operation {
-	return []*Operation{
-		exampleOperation(),
-	}
-}
-
-func expectedOperationIdentifier() *types.OperationIdentifier {
-	return &types.OperationIdentifier{
-		Index:        1,
-		NetworkIndex: nil,
-	}
-}
-
-func expectedRelatedOperations() []*types.OperationIdentifier {
-	return []*types.OperationIdentifier{}
 }
 
 func expectedOperation() *types.Operation {
 	return &types.Operation{
-		OperationIdentifier: expectedOperationIdentifier(),
-		RelatedOperations:   expectedRelatedOperations(),
-		Type:                "transfer",
-		Status:              "pending",
-		Account:             expectedAccount(),
-		Amount:              expectedAmount(),
+		OperationIdentifier: &types.OperationIdentifier{
+			Index:        1,
+			NetworkIndex: nil,
+		},
+		RelatedOperations: []*types.OperationIdentifier{},
+		Type:              "transfer",
+		Status:            "pending",
+		Account: &types.AccountIdentifier{
+			Address:    "0.0.0",
+			SubAccount: nil,
+			Metadata:   nil,
+		},
+		Amount: &types.Amount{
+			Value:    "400",
+			Currency: config.CurrencyHbar,
+			Metadata: nil,
+		},
 	}
 }
 

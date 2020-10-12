@@ -22,6 +22,7 @@ package types
 
 import (
 	"github.com/coinbase/rosetta-sdk-go/types"
+	entityid "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/services/encoding"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -34,30 +35,47 @@ func exampleBlock() *Block {
 		ConsensusEndNanos:   12300000,
 		ParentIndex:         1,
 		ParentHash:          "someparenthash",
-		Transactions:        exampleTransactions(),
-	}
-}
-
-func expectedBlockIdentifier() *types.BlockIdentifier {
-	return &types.BlockIdentifier{
-		Index: 2,
-		Hash:  "0xsomehash",
-	}
-}
-
-func expectedParentBlockIdentifier() *types.BlockIdentifier {
-	return &types.BlockIdentifier{
-		Index: 1,
-		Hash:  "0xsomeparenthash",
+		Transactions: []*Transaction{
+			{
+				Hash: "somehash",
+				Operations: []*Operation{
+					{
+						Index:  1,
+						Type:   "transfer",
+						Status: "pending",
+						Account: &Account{
+							entityid.EntityId{
+								ShardNum:  0,
+								RealmNum:  0,
+								EntityNum: 0,
+							},
+						},
+						Amount: &Amount{Value: int64(400)},
+					},
+				},
+			},
+		},
 	}
 }
 
 func expectedBlock() *types.Block {
 	return &types.Block{
-		BlockIdentifier:       expectedBlockIdentifier(),
-		ParentBlockIdentifier: expectedParentBlockIdentifier(),
-		Timestamp:             int64(10),
-		Transactions:          []*types.Transaction{expectedTransaction()},
+		BlockIdentifier: &types.BlockIdentifier{
+			Index: 2,
+			Hash:  "0xsomehash",
+		},
+		ParentBlockIdentifier: &types.BlockIdentifier{
+			Index: 1,
+			Hash:  "0xsomeparenthash",
+		},
+		Timestamp: int64(10),
+		Transactions: []*types.Transaction{
+			{
+				TransactionIdentifier: &types.TransactionIdentifier{Hash: "somehash"},
+				Operations:            []*types.Operation{expectedOperation()},
+				Metadata:              nil,
+			},
+		},
 	}
 }
 

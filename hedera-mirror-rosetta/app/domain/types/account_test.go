@@ -114,14 +114,10 @@ func TestComputeEncodedID(t *testing.T) {
 
 func TestNewAccountFromEncodedIDThrows(t *testing.T) {
 	// given:
-	var testData = struct {
-		input int64
-	}{
-		-123,
-	}
+	testData := int64(-1)
 
 	// when:
-	res, err := NewAccountFromEncodedID(testData.input)
+	res, err := NewAccountFromEncodedID(testData)
 
 	// then:
 	assert.Nil(t, res)

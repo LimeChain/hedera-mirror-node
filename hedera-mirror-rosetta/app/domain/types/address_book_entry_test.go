@@ -2,28 +2,40 @@ package types
 
 import (
 	"github.com/coinbase/rosetta-sdk-go/types"
+	entityid "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/services/encoding"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func exampleAddressBookEntry() *AddressBookEntry {
-	return &AddressBookEntry{
-		PeerId:   exampleAccount(),
-		Metadata: nil,
-	}
-}
-
 func exampleAddressBookEntries() *AddressBookEntries {
 	return &AddressBookEntries{
 		[]*AddressBookEntry{
-			exampleAddressBookEntry(),
+			{
+				PeerId: &Account{
+					entityid.EntityId{
+						ShardNum:  0,
+						RealmNum:  0,
+						EntityNum: 0,
+					},
+				},
+				Metadata: nil,
+			},
 		},
 	}
 }
 
 func expectedRosettaPeers() []*types.Peer {
 	return []*types.Peer{
-		{PeerID: exampleAccount().String(), Metadata: nil},
+		{
+			PeerID: (&Account{
+				entityid.EntityId{
+					ShardNum:  0,
+					RealmNum:  0,
+					EntityNum: 0,
+				},
+			}).String(),
+			Metadata: nil,
+		},
 	}
 }
 
