@@ -21,14 +21,56 @@
 package types
 
 import (
+	"github.com/coinbase/rosetta-sdk-go/types"
+	entityid "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/services/encoding"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func TestToRosettaAccount(t *testing.T) {
-	rosettaAccount := exampleAccount().ToRosettaAccount()
+func exampleAccount() *Account {
+	return &Account{
+		entityid.EntityId{
+			ShardNum:  0,
+			RealmNum:  0,
+			EntityNum: 0,
+		},
+	}
+}
 
+func exampleAccountWith(shard, realm, entity int64) *Account {
+	return &Account{
+		entityid.EntityId{
+			ShardNum:  shard,
+			RealmNum:  realm,
+			EntityNum: entity,
+		},
+	}
+}
+
+func expectedAccount() *types.AccountIdentifier {
+	return &types.AccountIdentifier{
+		Address:    "0.0.0",
+		SubAccount: nil,
+		Metadata:   nil,
+	}
+}
+
+func expectedAccountWith(shard int64, realm int64, number int64) *Account {
+	return &Account{
+		entityid.EntityId{
+			ShardNum:  shard,
+			RealmNum:  realm,
+			EntityNum: number,
+		},
+	}
+}
+
+func TestToRosettaAccount(t *testing.T) {
+	// when:
+	rosettaAccount := exampleAccount().ToRosetta()
+
+	// then:
 	assert.Equal(t, expectedAccount(), rosettaAccount)
 }
 
@@ -54,12 +96,28 @@ func TestNewAccountFromEncodedID(t *testing.T) {
 	}
 }
 
+func TestComputeEncodedID(t *testing.T) {
+	var testData = []struct {
+		shard, realm, number int64
+	}{
+		{-1, 123, 246},
+		{123, -123, 246},
+		{123, 23, -246},
+	}
+
+	for _, tt := range testData {
+		res, e := exampleAccountWith(tt.shard, tt.realm, tt.number).ComputeEncodedID()
+		assert.Zero(t, res)
+		assert.NotNil(t, e)
+	}
+}
+
 func TestNewAccountFromEncodedIDThrows(t *testing.T) {
 	// given:
 	var testData = struct {
-		input, shard, realm, number int64
+		input int64
 	}{
-		-123, 0, 0, 0,
+		-123,
 	}
 
 	// when:
@@ -96,12 +154,12 @@ func TestAccountFromString(t *testing.T) {
 func TestAccountFromStringThrows(t *testing.T) {
 	// given:
 	var testData = []struct {
-		input                string
-		shard, realm, number int64
+		input string
 	}{
-		{"a.0.0", 0, 0, 0},
-		{"0.b.0", 0, 0, 10},
-		{"0.0c", 0, 0, 4294967295},
+		{"a.0.0"},
+		{"0.b.0"},
+		{"0.0c"},
+		{"0.0.c"},
 	}
 
 	var expectedNil *Account = nil

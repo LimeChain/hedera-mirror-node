@@ -21,13 +21,49 @@
 package types
 
 import (
+	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
+func exampleBlock() *Block {
+	return &Block{
+		Index:               2,
+		Hash:                "somehash",
+		ConsensusStartNanos: 10000000,
+		ConsensusEndNanos:   12300000,
+		ParentIndex:         1,
+		ParentHash:          "someparenthash",
+		Transactions:        exampleTransactions(),
+	}
+}
+
+func expectedBlockIdentifier() *types.BlockIdentifier {
+	return &types.BlockIdentifier{
+		Index: 2,
+		Hash:  "0xsomehash",
+	}
+}
+
+func expectedParentBlockIdentifier() *types.BlockIdentifier {
+	return &types.BlockIdentifier{
+		Index: 1,
+		Hash:  "0xsomeparenthash",
+	}
+}
+
+func expectedBlock() *types.Block {
+	return &types.Block{
+		BlockIdentifier:       expectedBlockIdentifier(),
+		ParentBlockIdentifier: expectedParentBlockIdentifier(),
+		Timestamp:             int64(10),
+		Transactions:          []*types.Transaction{expectedTransaction()},
+	}
+}
+
 func TestToRosettaBlock(t *testing.T) {
 	// when:
-	rosettaBlockResult := exampleBlock().ToRosettaBlock()
+	rosettaBlockResult := exampleBlock().ToRosetta()
 
 	// then:
 	assert.Equal(t, expectedBlock(), rosettaBlockResult)

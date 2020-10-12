@@ -21,13 +21,52 @@
 package types
 
 import (
+	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
+func exampleOperation() *Operation {
+	return &Operation{
+		Index:   1,
+		Type:    "transfer",
+		Status:  "pending",
+		Account: exampleAccount(),
+		Amount:  exampleAmount(),
+	}
+}
+
+func exampleOperations() []*Operation {
+	return []*Operation{
+		exampleOperation(),
+	}
+}
+
+func expectedOperationIdentifier() *types.OperationIdentifier {
+	return &types.OperationIdentifier{
+		Index:        1,
+		NetworkIndex: nil,
+	}
+}
+
+func expectedRelatedOperations() []*types.OperationIdentifier {
+	return []*types.OperationIdentifier{}
+}
+
+func expectedOperation() *types.Operation {
+	return &types.Operation{
+		OperationIdentifier: expectedOperationIdentifier(),
+		RelatedOperations:   expectedRelatedOperations(),
+		Type:                "transfer",
+		Status:              "pending",
+		Account:             expectedAccount(),
+		Amount:              expectedAmount(),
+	}
+}
+
 func TestToRosettaOperation(t *testing.T) {
 	// when:
-	rosettaOperation := exampleOperation().ToRosettaOperation()
+	rosettaOperation := exampleOperation().ToRosetta()
 
 	// then:
 	assert.Equal(t, expectedOperation(), rosettaOperation)
