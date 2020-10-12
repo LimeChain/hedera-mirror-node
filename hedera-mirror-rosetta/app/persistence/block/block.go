@@ -59,15 +59,14 @@ const (
                                             WHERE  consensus_end <= (SELECT consensus_end
                                                                      FROM   record_file
                                                                      WHERE  file_hash = ?)) AS rcd`
-	// selectStartingRecordFileIndex - Selects the count of rows from the record_file table,
+	// selectSkippedRecordFilesCount - Selects the count of rows from the record_file table,
 	// where each one's consensus_end is before the MIN consensus_end of address_book table (the first one added).
 	// This way, record files before that timestamp are considered non-existent,
 	// and the first record_file (block) will be considered equal or bigger
 	// than the consensus_timestamp of the first account_balance
-	selectStartingRecordFileIndex string = `SELECT COUNT(*)
+	selectSkippedRecordFilesCount string = `SELECT COUNT(*)
                                             FROM record_file
-                                            WHERE consensus_end < (SELECT MIN(consensus_timestamp)
-                                            FROM account_balance)`
+                                            WHERE consensus_end < (SELECT MIN(consensus_timestamp) FROM account_balance)`
 )
 
 type recordFile struct {
@@ -207,7 +206,7 @@ func (br *BlockRepository) constructBlockResponse(rf *recordFile, blockIndex int
 
 func (br *BlockRepository) getRecordFileStartingIndex() (*int64, *rTypes.Error) {
 	if br.recordFileStartingIndex == nil {
-		if br.dbClient.Raw(selectStartingRecordFileIndex).Count(&br.recordFileStartingIndex).RecordNotFound() {
+		if br.dbClient.Raw(selectSkippedRecordFilesCount).Count(&br.recordFileStartingIndex).RecordNotFound() {
 			return nil, errors.Errors[errors.BlockNotFound]
 		}
 	}
