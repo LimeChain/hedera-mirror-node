@@ -104,6 +104,33 @@ Currently, Rosetta CLI Validation supports only **DEMO** and **TESTNET**, where
 ./run-validation.sh testnet
 ```
 
+#### Rosetta All-in-One Dockerfile configuration
+
+The **All-in-One** configuration aggregates the **PostgreSQL**, **Importer** and **Rosetta** services in a single Dockerfile configuration.
+Configuration is based on Rosetta specification, found [here](https://www.rosetta-api.org/docs/node_deployment.html).
+
+To build the Dockerfile, run:
+```console
+cd hedera-mirror-rosetta/build
+docker build .
+```
+
+The built Docker image can be run in **online** (default) and **offline** mode.
+**Online** mode runs all the above specified services, where in **offline** - only the **Rosetta** service.
+
+Image container can be run via:
+```console
+docker run <image>
+```
+
+To run in **offline** mode:
+```console
+docker run -e MODE=offline <image>
+```
+
+You can override **Importer** and **Rosetta** services default configuration by passing
+**environment variables**, specified [here](./configuration.md).
+
 ## Running via Docker Compose
 
 Docker Compose scripts are provided and run all the mirror node components:
