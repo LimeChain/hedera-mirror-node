@@ -144,7 +144,7 @@ the **Importer** and **Rosetta** default network configuration:
 docker run -e NETWORK=TESTNET <image>
 ```
 
-In order to **Importer** to sync data, different from default,
+In order **Importer** to sync data, different from default,
 the following environment variables need to be overridden:
 ```console
 HEDERA_MIRROR_IMPORTER_DOWNLOADER_ACCESSKEY=
