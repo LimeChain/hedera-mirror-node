@@ -131,6 +131,12 @@ docker run -e MODE=offline <image>
 You can override **Importer** and **Rosetta** services default configuration by passing
 **environment variables**, specified [here](./configuration.md).
 
+For ease, an additional environment variable, called  **NETWORK** is added, where you can both override
+the **Importer** and **Rosetta** default network configuration:
+```console
+docker run -e NETWORK=TESTNET <image>
+```
+
 ## Running via Docker Compose
 
 Docker Compose scripts are provided and run all the mirror node components:
