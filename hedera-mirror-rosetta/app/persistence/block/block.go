@@ -25,6 +25,7 @@ import (
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 	"github.com/jinzhu/gorm"
+	"log"
 )
 
 const genesisPreviousHash = "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
@@ -99,10 +100,8 @@ func NewBlockRepository(dbClient *gorm.DB) *BlockRepository {
 
 // FindByIndex retrieves a block by given Index
 func (br *BlockRepository) FindByIndex(index int64) (*types.Block, *rTypes.Error) {
-	startingIndex, err := br.getRecordFileStartingIndex()
-	if err != nil {
-		return nil, errors.Errors[errors.BlockNotFound]
-	}
+	startingIndex := br.getRecordFilesStartingIndex()
+
 	rf := &recordFile{}
 	if br.dbClient.Order("consensus_end asc").Offset(index + *startingIndex).First(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
@@ -135,10 +134,8 @@ func (br *BlockRepository) FindByIdentifier(index int64, hash string) (*types.Bl
 
 // RetrieveGenesis retrieves the genesis block
 func (br *BlockRepository) RetrieveGenesis() (*types.Block, *rTypes.Error) {
-	startingIndex, err := br.getRecordFileStartingIndex()
-	if err != nil {
-		return nil, errors.Errors[errors.BlockNotFound]
-	}
+	startingIndex := br.getRecordFilesStartingIndex()
+
 	rf := &recordFile{}
 	if br.dbClient.Offset(*startingIndex).Limit(1).Find(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
@@ -154,10 +151,8 @@ func (br *BlockRepository) RetrieveGenesis() (*types.Block, *rTypes.Error) {
 
 // RetrieveLatest retrieves the latest block
 func (br *BlockRepository) RetrieveLatest() (*types.Block, *rTypes.Error) {
-	startingIndex, err := br.getRecordFileStartingIndex()
-	if err != nil {
-		return nil, errors.Errors[errors.BlockNotFound]
-	}
+	startingIndex := br.getRecordFilesStartingIndex()
+
 	rf := &recordFile{}
 	if br.dbClient.Raw(selectLatestWithIndex, *startingIndex).Scan(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
@@ -167,10 +162,8 @@ func (br *BlockRepository) RetrieveLatest() (*types.Block, *rTypes.Error) {
 }
 
 func (br *BlockRepository) findRecordFileByHash(hash string) (*recordFile, *rTypes.Error) {
-	startingIndex, err := br.getRecordFileStartingIndex()
-	if err != nil {
-		return nil, errors.Errors[errors.BlockNotFound]
-	}
+	startingIndex := br.getRecordFilesStartingIndex()
+
 	rf := &recordFile{}
 	if br.dbClient.Raw(selectByHashWithIndex, hash, hash).Scan(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
@@ -204,11 +197,10 @@ func (br *BlockRepository) constructBlockResponse(rf *recordFile, blockIndex int
 	}
 }
 
-func (br *BlockRepository) getRecordFileStartingIndex() (*int64, *rTypes.Error) {
+func (br *BlockRepository) getRecordFilesStartingIndex() *int64 {
 	if br.recordFileStartingIndex == nil {
-		if br.dbClient.Raw(selectSkippedRecordFilesCount).Count(&br.recordFileStartingIndex).RecordNotFound() {
-			return nil, errors.Errors[errors.BlockNotFound]
-		}
+		br.dbClient.Raw(selectSkippedRecordFilesCount).Count(&br.recordFileStartingIndex)
+		log.Printf(`Fetched Record Files starting index: %d`, *br.recordFileStartingIndex)
 	}
-	return br.recordFileStartingIndex, nil
+	return br.recordFileStartingIndex
 }
