@@ -20,6 +20,10 @@
 
 package common
 
+const (
+	tableNameCryptoTransfer = "crypto_transfer"
+)
+
 type CryptoTransfer struct {
 	EntityID           int64 `gorm:"type:bigint"`
 	ConsensusTimestamp int64 `gorm:"type:bigint"`
@@ -28,5 +32,5 @@ type CryptoTransfer struct {
 
 // TableName - Set table name of the CryptoTransfers to be `crypto_transfer`
 func (CryptoTransfer) TableName() string {
-	return "crypto_transfer"
+	return tableNameCryptoTransfer
 }
