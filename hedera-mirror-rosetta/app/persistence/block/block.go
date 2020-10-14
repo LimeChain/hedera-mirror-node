@@ -28,8 +28,6 @@ import (
 	"log"
 )
 
-const genesisPreviousHash = "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-
 const (
 	// selectLatestWithIndex - Selects row with the latest consensus_end and adds additional info about the position of that row using count.
 	// The information about the position is used as Block Index
@@ -182,7 +180,7 @@ func (br *BlockRepository) constructBlockResponse(rf *recordFile, blockIndex int
 	parentHash := rf.PrevHash
 
 	// Handle the edge case for querying first block
-	if rf.PrevHash == genesisPreviousHash || parentIndex < 0 {
+	if parentIndex < 0 {
 		parentIndex = 0          // Parent index should be 0, same as current block index
 		parentHash = rf.FileHash // Parent hash should be same as current block hash
 	}
