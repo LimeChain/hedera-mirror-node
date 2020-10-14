@@ -2,28 +2,12 @@ package services
 
 import (
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
-	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/repositories/mocks"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/mocks"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/config"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
-
-var mockBlockRepository *mocks.MockBlockRepository
-var mockTransactionRepository *mocks.MockTransactionRepository
-var mockAccountRepo *mocks.MockAccountRepository
-var exampleAccountService *AccountAPIService
-var exampleCommons Commons
-var nilBlock *types.Block = nil
-var nilError *rTypes.Error = nil
-
-func setup() {
-	mockBlockRepository = &mocks.MockBlockRepository{}
-	mockTransactionRepository = &mocks.MockTransactionRepository{}
-	mockAccountRepo = &mocks.MockAccountRepository{}
-	exampleCommons = NewCommons(mockBlockRepository, mockTransactionRepository)
-	exampleAccountService = NewAccountAPIService(exampleCommons, mockAccountRepo)
-}
 
 func exampleBlock() *types.Block {
 	return &types.Block{
@@ -31,7 +15,7 @@ func exampleBlock() *types.Block {
 		Hash:                "0x123jsjs",
 		ConsensusStartNanos: 1000000,
 		ConsensusEndNanos:   20000000,
-		ParentIndex:         1,
+		ParentIndex:         2,
 		ParentHash:          "0xparenthash",
 	}
 }
@@ -75,12 +59,15 @@ func expectedAccountBalanceResponse() *rTypes.AccountBalanceResponse {
 
 func TestAccountBalance(t *testing.T) {
 	// mocks:
-	setup()
-	mockBlockRepository.On("RetrieveLatest").Return(exampleBlock(), nilError)
-	mockAccountRepo.On("RetrieveBalanceAtBlock").Return(exampleAmount(), nilError)
+	mocks.Setup()
+	mocks.MBlockRepository.On("RetrieveLatest").Return(exampleBlock(), mocks.NilError)
+	mocks.MAccountRepository.On("RetrieveBalanceAtBlock").Return(exampleAmount(), mocks.NilError)
+
+	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	accountService := NewAccountAPIService(commons, mocks.MAccountRepository)
 
 	// when:
-	actualResult, e := exampleAccountService.AccountBalance(nil, exampleRequest(false))
+	actualResult, e := accountService.AccountBalance(nil, exampleRequest(false))
 
 	// then:
 	assert.Equal(t, expectedAccountBalanceResponse(), actualResult)
@@ -89,27 +76,33 @@ func TestAccountBalance(t *testing.T) {
 
 func TestAccountBalanceFullData(t *testing.T) {
 	// mocks:
-	setup()
-	mockBlockRepository.On("FindByIdentifier").Return(exampleBlock(), nilError)
-	mockAccountRepo.On("RetrieveBalanceAtBlock").Return(exampleAmount(), nilError)
+	mocks.Setup()
+	mocks.MBlockRepository.On("FindByIdentifier").Return(exampleBlock(), mocks.NilError)
+	mocks.MAccountRepository.On("RetrieveBalanceAtBlock").Return(exampleAmount(), mocks.NilError)
+
+	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	accountService := NewAccountAPIService(commons, mocks.MAccountRepository)
 
 	// when:
-	actualResult, e := exampleAccountService.AccountBalance(nil, exampleRequest(true))
+	actualResult, e := accountService.AccountBalance(nil, exampleRequest(true))
 
 	//then:
 	assert.Equal(t, expectedAccountBalanceResponse(), actualResult)
 	assert.Nil(t, e)
-	mockBlockRepository.AssertNotCalled(t, "RetrieveLatest")
+	mocks.MBlockRepository.AssertNotCalled(t, "RetrieveLatest")
 }
 
 func TestAccountBalanceThrows(t *testing.T) {
 	// mocks:
-	setup()
+	mocks.Setup()
 
-	mockBlockRepository.On("RetrieveLatest").Return(nilBlock, &rTypes.Error{})
+	mocks.MBlockRepository.On("RetrieveLatest").Return(mocks.NilBlock, &rTypes.Error{})
+
+	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	accountService := NewAccountAPIService(commons, mocks.MAccountRepository)
 
 	// when:
-	actualResult, e := exampleAccountService.AccountBalance(nil, exampleRequest(false))
+	actualResult, e := accountService.AccountBalance(nil, exampleRequest(false))
 
 	// then:
 	assert.Nil(t, actualResult)
