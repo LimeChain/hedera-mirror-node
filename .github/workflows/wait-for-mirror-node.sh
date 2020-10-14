@@ -33,10 +33,10 @@ do
 
     if [ "$http_code" = "200" ]
     then
-        echo Mirror Node synching has started
+        echo Mirror Node syncing has started
         exit 0
     else
-        echo Mirror Node synching has not started yet...
+        echo Mirror Node syncing has not started yet...
 
         response_body=$(tail -n2 <<< "$response" | head -n1)
         is_retriable=$(echo $response_body | jq '.retriable')
