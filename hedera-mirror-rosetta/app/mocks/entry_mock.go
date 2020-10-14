@@ -21,7 +21,6 @@
 package mocks
 
 import (
-	"fmt"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/stretchr/testify/mock"
@@ -32,7 +31,6 @@ type MockAddressBookEntryRepository struct {
 }
 
 func (m MockAddressBookEntryRepository) Entries() (*types.AddressBookEntries, *rTypes.Error) {
-	fmt.Println("Entries")
 	args := m.Called()
 	return args.Get(0).(*types.AddressBookEntries), args.Get(1).(*rTypes.Error)
 }
