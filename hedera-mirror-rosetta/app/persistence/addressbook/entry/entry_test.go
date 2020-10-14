@@ -29,6 +29,19 @@ var (
 	}
 )
 
+func TestShouldReturnValidTableName(t *testing.T) {
+	assert.Equal(t, tableNameAddressBookEntry, addressBookEntry{}.TableName())
+}
+
+func TestShouldReturnValidRepository(t *testing.T) {
+	gormDbClient, _ := mocks.DatabaseMock(t)
+
+	result := NewAddressBookEntryRepository(gormDbClient)
+
+	assert.IsType(t, &AddressBookEntryRepository{}, result)
+	assert.Equal(t, result.dbClient, gormDbClient)
+}
+
 func TestShouldReturnCorrectAddressBookEntries(t *testing.T) {
 	// given
 	aber, columns, mock := setupRepository(t)
@@ -43,10 +56,6 @@ func TestShouldReturnCorrectAddressBookEntries(t *testing.T) {
 	result, err := aber.Entries()
 
 	// assert
-	if err != nil {
-		t.Errorf("Expected no error, got '%s'", err.Message)
-	}
-
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
@@ -54,6 +63,7 @@ func TestShouldReturnCorrectAddressBookEntries(t *testing.T) {
 	assert.Len(t, expectedResult.Entries, 1)
 	assert.Equal(t, expectedResult.Entries[0].Metadata, result.Entries[0].Metadata)
 	assert.Equal(t, expectedResult.Entries[0].PeerId, result.Entries[0].PeerId)
+	assert.Nil(t, err)
 }
 
 func TestShouldFailReturnEntries(t *testing.T) {
@@ -70,15 +80,13 @@ func TestShouldFailReturnEntries(t *testing.T) {
 	result, err := aber.Entries()
 
 	// assert
-	if result != nil {
-		t.Error("Expected no result.")
-	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 
-	assert.Equal(t, err.Message, errors.InternalServerError)
+	assert.Nil(t, result)
+	assert.Equal(t, errors.InternalServerError, err.Message)
 }
 
 func TestShouldReturnProperPeerId(t *testing.T) {
@@ -90,12 +98,8 @@ func TestShouldReturnProperPeerId(t *testing.T) {
 	// when
 	result, err := abe.getPeerId()
 
-	// then
-	if err != nil {
-		t.Errorf("Expected no error, got '%s'", err.Message)
-	}
-
 	assert.Equal(t, peerId, result)
+	assert.Nil(t, err)
 }
 
 func TestShouldFailReturningProperPeerId(t *testing.T) {
@@ -107,12 +111,8 @@ func TestShouldFailReturningProperPeerId(t *testing.T) {
 	// when
 	result, err := abe.getPeerId()
 
-	// then
-	if result != nil {
-		t.Errorf("Expected no result, got '%s'", result)
-	}
-
-	assert.Equal(t, err.Message, errors.InternalServerError)
+	assert.Nil(t, result)
+	assert.Equal(t, errors.InternalServerError, err.Message)
 }
 
 func setupRepository(t *testing.T) (*AddressBookEntryRepository, []string, sqlmock.Sqlmock) {
