@@ -66,6 +66,9 @@ const (
 	selectSkippedRecordFilesCount string = `SELECT COUNT(*)
                                             FROM record_file
                                             WHERE consensus_end < (SELECT MIN(consensus_timestamp) FROM account_balance)`
+
+	// selectAccountBalancesCount - Selects the count of rows from account_balance table
+	selectAccountBalancesCount string = `SELECT COUNT(*) FROM account_balance`
 )
 
 type recordFile struct {
@@ -98,7 +101,10 @@ func NewBlockRepository(dbClient *gorm.DB) *BlockRepository {
 
 // FindByIndex retrieves a block by given Index
 func (br *BlockRepository) FindByIndex(index int64) (*types.Block, *rTypes.Error) {
-	startingIndex := br.getRecordFilesStartingIndex()
+	startingIndex, err := br.getRecordFilesStartingIndex()
+	if err != nil {
+		return nil, err
+	}
 
 	rf := &recordFile{}
 	if br.dbClient.Order("consensus_end asc").Offset(index + *startingIndex).First(rf).RecordNotFound() {
@@ -132,7 +138,10 @@ func (br *BlockRepository) FindByIdentifier(index int64, hash string) (*types.Bl
 
 // RetrieveGenesis retrieves the genesis block
 func (br *BlockRepository) RetrieveGenesis() (*types.Block, *rTypes.Error) {
-	startingIndex := br.getRecordFilesStartingIndex()
+	startingIndex, err := br.getRecordFilesStartingIndex()
+	if err != nil {
+		return nil, err
+	}
 
 	rf := &recordFile{}
 	if br.dbClient.Offset(*startingIndex).Limit(1).Find(rf).RecordNotFound() {
@@ -149,7 +158,10 @@ func (br *BlockRepository) RetrieveGenesis() (*types.Block, *rTypes.Error) {
 
 // RetrieveLatest retrieves the latest block
 func (br *BlockRepository) RetrieveLatest() (*types.Block, *rTypes.Error) {
-	startingIndex := br.getRecordFilesStartingIndex()
+	startingIndex, err := br.getRecordFilesStartingIndex()
+	if err != nil {
+		return nil, err
+	}
 
 	rf := &recordFile{}
 	if br.dbClient.Raw(selectLatestWithIndex, *startingIndex).Scan(rf).RecordNotFound() {
@@ -160,7 +172,10 @@ func (br *BlockRepository) RetrieveLatest() (*types.Block, *rTypes.Error) {
 }
 
 func (br *BlockRepository) findRecordFileByHash(hash string) (*recordFile, *rTypes.Error) {
-	startingIndex := br.getRecordFilesStartingIndex()
+	startingIndex, err := br.getRecordFilesStartingIndex()
+	if err != nil {
+		return nil, err
+	}
 
 	rf := &recordFile{}
 	if br.dbClient.Raw(selectByHashWithIndex, hash, *startingIndex, hash).Scan(rf).RecordNotFound() {
@@ -194,10 +209,15 @@ func (br *BlockRepository) constructBlockResponse(rf *recordFile, blockIndex int
 	}
 }
 
-func (br *BlockRepository) getRecordFilesStartingIndex() *int64 {
+func (br *BlockRepository) getRecordFilesStartingIndex() (*int64, *rTypes.Error) {
 	if br.recordFileStartingIndex == nil {
+		var accountBalancesCount int64
+		br.dbClient.Raw(selectAccountBalancesCount).Count(&accountBalancesCount)
+		if accountBalancesCount == 0 {
+			return nil, errors.Errors[errors.NodeIsStarting]
+		}
 		br.dbClient.Raw(selectSkippedRecordFilesCount).Count(&br.recordFileStartingIndex)
 		log.Printf(`Fetched Record Files starting index: %d`, *br.recordFileStartingIndex)
 	}
-	return br.recordFileStartingIndex
+	return br.recordFileStartingIndex, nil
 }
