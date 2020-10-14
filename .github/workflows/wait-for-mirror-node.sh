@@ -41,7 +41,7 @@ do
         response_body=$(tail -n2 <<< "$response" | head -n1)
         is_retriable=$(echo $response_body | jq '.retriable')
 
-        if [ "$is_retriable" == false ];
+        if [ "$is_retriable" = false ];
         then
             echo Request cannot be retried, response body: [$response_body]
             echo Exiting...
@@ -51,6 +51,3 @@ do
 
     sleep 5
 done
-
-echo Timed out. Mirror Node did not start
-exit 1
