@@ -1,0 +1,468 @@
+version: 2
+jobs:
+  build_maven:
+    environment:
+    - WORKSPACE: /tmp/workspace
+    - MAVEN_CLI_OPTS: --batch-mode --no-transfer-progress --show-version -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+    - MAVEN_SPRING_OPTS: -Dspring.config.additional-location=file:${WORKSPACE}/ -Dembedded.containers.enabled=false -Dembedded.google.pubsub.enabled=false
+    docker:
+    - image: adoptopenjdk:11-jdk-hotspot
+    - image: postgres:9.6-alpine
+      environment:
+        POSTGRES_DB: mirror_node_integration
+        POSTGRES_PASSWORD: mirror_node_pass
+        POSTGRES_USER: mirror_node
+    - image: google/cloud-sdk:290.0.1
+      command:
+      - /bin/sh
+      - -c
+      - gcloud beta emulators pubsub start
+    - image: redis:6.0.8-alpine
+    steps:
+    - run:
+        command: apt-get -qq update; apt-get -y install git
+    - checkout
+    - run:
+        name: Calculate checksum of all pom.xml
+        command: find . -type f -name "pom.xml" | sort -u | xargs sha512sum > pom.xml.checksum
+    - restore_cache:
+        keys:
+        - maven-v2-{{ arch }}-{{ .Branch }}-{{ checksum "pom.xml.checksum" }}
+        - maven-v2-{{ arch }}-{{ .Branch }}
+        - maven-v2-{{ arch }}-
+    - run:
+        name: Resolve dependencies
+        command: cat pom.xml && ls -la ./hedera-mirror-rosetta && ./mvnw ${MAVEN_CLI_OPTS} de.qaware.maven:go-offline-maven-plugin:resolve-dependencies
+    - save_cache:
+        key: maven-v2-{{ arch }}-{{ .Branch }}-{{ checksum "pom.xml.checksum" }}
+        paths:
+        - ~/.m2
+    - run:
+        name: Write spring override config
+        command: |
+          mkdir -p ${WORKSPACE}
+          cat >> ${WORKSPACE}/application.yml << EOF
+          db: &db
+            db:
+              host: 127.0.0.1
+              port: 5432
+              name: mirror_node_integration
+              username: mirror_node
+              password: mirror_node_pass
+          hedera:
+            mirror:
+              importer:
+                <<: *db
+              grpc:
+                <<: *db
+          spring:
+            redis:
+              url: redis://127.0.0.1:6379
+          ---
+          spring:
+            profiles: pubsub
+            cloud:
+              gcp:
+                pubsub:
+                  projectId: my-project-id # Pubsub emulator's default values
+                  emulator-host: 127.0.0.1:8085
+          EOF
+    - run:
+        name: Running maven (validate, compile, test, package)
+        command: ./mvnw ${MAVEN_CLI_OPTS} ${MAVEN_SPRING_OPTS} package
+    - store_artifacts:
+        path: hedera-mirror-importer/target/surefire-reports
+        destination: /importer-surefire
+    - store_artifacts:
+        path: hedera-mirror-grpc/target/surefire-reports
+        destination: /grpc-surefire
+    - store_test_results:
+        path: hedera-mirror-importer/target/surefire-reports
+    - run:
+        name: Upload Code Coverage
+        command: bash <(curl -s https://codecov.io/bash)
+    - run:
+        name: Collecting assets for hedera-mirror-grpc
+        command: |
+          set -ex
+          MODULE=hedera-mirror-grpc
+          VERSION_TAG=${CIRCLE_TAG/*\//}
+          NAME=${MODULE}-${VERSION_TAG:-b$CIRCLE_BUILD_NUM}
+          mkdir -p ${WORKSPACE}/${NAME}
+          mv ${MODULE}/target/${MODULE}-*-exec.jar ${WORKSPACE}/${NAME}/${NAME}.jar
+          mv ${MODULE}/scripts ${WORKSPACE}/${NAME}
+          mkdir -p ${WORKSPACE}/artifacts
+          tar -czf ${WORKSPACE}/artifacts/${NAME}.tgz -C ${WORKSPACE} ${NAME}
+    - run:
+        name: Collecting assets for hedera-mirror-importer
+        command: |
+          set -ex
+          MODULE=hedera-mirror-importer
+          VERSION_TAG=${CIRCLE_TAG/*\//}
+          NAME=${MODULE}-${VERSION_TAG:-b$CIRCLE_BUILD_NUM}
+          mkdir -p ${WORKSPACE}/${NAME}
+          mv ${MODULE}/target/${MODULE}-*-exec.jar ${WORKSPACE}/${NAME}/${NAME}.jar
+          mv ${MODULE}/scripts ${WORKSPACE}/${NAME}
+          mkdir -p ${WORKSPACE}/artifacts
+          tar -czf ${WORKSPACE}/artifacts/${NAME}.tgz -C ${WORKSPACE} ${NAME}
+    - persist_to_workspace:
+        root: /tmp/workspace
+        paths:
+        - artifacts
+  build_rest:
+    environment:
+    - WORKSPACE: /tmp/workspace
+    - POSTGRES_DB: mirror_node_integration
+    - POSTGRES_PASSWORD: mirror_node_pass
+    - POSTGRES_USER: mirror_node
+    docker:
+    - image: node:12.10.0
+    - image: postgres:9.6-alpine
+      environment:
+        POSTGRES_DB: mirror_node_integration
+        POSTGRES_PASSWORD: mirror_node_pass
+        POSTGRES_USER: mirror_node
+    - image: localstack/localstack:0.11.3
+      environment:
+        SERVICES: s3
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+        - npm-v1-{{ .Branch }}-{{ checksum "hedera-mirror-rest/package-lock.json" }}
+        - npm-v1-{{ .Branch }}
+        - npm-v1-
+    - run:
+        working_directory: hedera-mirror-rest
+        name: Resolve dependencies
+        command: npm ci
+    - save_cache:
+        key: npm-v1-{{ .Branch }}-{{ checksum "hedera-mirror-rest/package-lock.json" }}
+        paths:
+        - node_modules
+        - .node-flywaydb
+        - ~/.npm
+    - run:
+        working_directory: hedera-mirror-rest
+        name: Run npm test
+        command: npm test
+        environment:
+          TEST_S3_HOST: 127.0.0.1
+    - store_artifacts:
+        path: hedera-mirror-rest/target/jest-junit
+        destination: /rest-jest
+    - store_test_results:
+        path: hedera-mirror-rest/target/jest-junit
+    - run:
+        working_directory: hedera-mirror-rest
+        name: Upload Code Coverage
+        command: node_modules/codecov/bin/codecov
+    - run:
+        working_directory: hedera-mirror-rest
+        name: Collecting assets
+        command: |
+          set -ex
+          VERSION_TAG=${CIRCLE_TAG/*\//}
+          NAME=hedera-mirror-rest-${VERSION_TAG:-b$CIRCLE_BUILD_NUM}
+          npm pack
+          mkdir -p ${WORKSPACE}/artifacts
+          mv hedera-mirror-rest*.tgz ${WORKSPACE}/artifacts/${NAME}.tgz
+    - persist_to_workspace:
+        root: /tmp/workspace
+        paths:
+        - artifacts
+  release_artifacts:
+    docker:
+    - image: adoptopenjdk:11-jdk-hotspot
+    steps:
+    - attach_workspace:
+        at: /tmp/workspace
+    - store_artifacts:
+        path: /tmp/workspace/artifacts
+  publish_images:
+    machine:
+      image: ubuntu-2004:202008-01
+    environment:
+    - MAVEN_CLI_OPTS: --batch-mode --no-transfer-progress --show-version -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+    - MAVEN_SPRING_OPTS: -Dspring.config.additional-location=file:${WORKSPACE}/ -Dembedded.containers.enabled=false -Dembedded.google.pubsub.enabled=false
+    - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+    - GOOGLE_APPLICATION_CREDENTIALS: json_key_file
+    steps:
+    - checkout
+    - run:
+        name: Install OpenJDK 11
+        command: |
+          sudo add-apt-repository ppa:openjdk-r/ppa \
+          && sudo apt-get update -q \
+          && sudo apt install -y openjdk-11-jdk
+    - run:
+        name: Setup docker-credential-gcr
+        command: |
+          VERSION=2.0.0
+          curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v${VERSION}/docker-credential-gcr_linux_amd64-${VERSION}.tar.gz" \
+            | tar xz > docker-credential-gcr
+          sudo mv docker-credential-gcr /usr/bin/docker-credential-gcr
+          chmod +x /usr/bin/docker-credential-gcr
+          echo ${GCR_JSON_KEY_FILE} > json_key_file
+          docker-credential-gcr configure-docker
+    - run:
+        name: Calculate checksum of all pom.xml
+        command: find . -type f -name "pom.xml" | sort -u | xargs sha512sum > pom.xml.checksum
+    - restore_cache:
+        keys:
+        - maven-v2-{{ arch }}-{{ .Branch }}-{{ checksum "pom.xml.checksum" }}
+        - maven-v2-{{ arch }}-{{ .Branch }}
+        - maven-v2-{{ arch }}-
+    - run:
+        name: Running maven deploy
+        command: ./mvnw ${MAVEN_CLI_OPTS} deploy -DskipTests
+  perf_maven:
+    environment:
+    - WORKSPACE: /tmp/workspace
+    - MAVEN_CLI_OPTS: --batch-mode --no-transfer-progress --show-version -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+    - MAVEN_SPRING_OPTS: -Dspring.config.additional-location=file:${WORKSPACE}/ -Dembedded.containers.enabled=false -Dembedded.google.pubsub.enabled=false
+    docker:
+    - image: adoptopenjdk:11-jdk-hotspot
+    - image: postgres:9.6-alpine
+      environment:
+        POSTGRES_DB: mirror_node_integration
+        POSTGRES_PASSWORD: mirror_node_pass
+        POSTGRES_USER: mirror_node
+    - image: redis:6.0.8-alpine
+    steps:
+    - checkout
+    - run:
+        name: Calculate checksum of all pom.xml
+        command: find . -type f -name "pom.xml" | sort -u | xargs sha512sum > pom.xml.checksum
+    - restore_cache:
+        keys:
+        - maven-v2-{{ arch }}-{{ .Branch }}-{{ checksum "pom.xml.checksum" }}
+        - maven-v2-{{ arch }}-{{ .Branch }}
+        - maven-v2-{{ arch }}-
+    - run:
+        name: Write spring override config
+        command: |
+          mkdir -p ${WORKSPACE}
+          cat >> ${WORKSPACE}/application.yml << EOF
+          db: &db
+            db:
+              host: 127.0.0.1
+              port: 5432
+              name: mirror_node_integration
+              username: mirror_node
+              password: mirror_node_pass
+          hedera:
+            mirror:
+              importer:
+                <<: *db
+              grpc:
+                <<: *db
+          spring:
+            redis:
+              url: redis://127.0.0.1:6379
+          ---
+          spring:
+            profiles: pubsub
+            cloud:
+              gcp:
+                pubsub:
+                  projectId: my-project-id # Pubsub emulator's default values
+                  emulator-host: 127.0.0.1:8085
+          EOF
+    - run:
+        name: Running maven (integration)
+        command: ./mvnw ${MAVEN_CLI_OPTS} ${MAVEN_SPRING_OPTS} integration-test --projects hedera-mirror-importer/ -P performance-test
+    - save_cache:
+        key: maven-v2-{{ arch }}-{{ .Branch }}-{{ checksum "pom.xml.checksum" }}
+        paths:
+        - ~/.m2
+    - store_test_results:
+        path: hedera-mirror-importer/target/failsafe-reports
+  cleanup_images:
+    machine:
+      image: ubuntu-2004:202008-01
+    steps:
+    - checkout
+    - run:
+        name: GCloud Setup
+        command: |
+          echo ${GCR_JSON_KEY_FILE} | gcloud auth activate-service-account --key-file=-
+          gcloud --quiet config set project mirrornode
+    - run:
+        name: Untags old master images
+        command: |
+          set -ex
+          UNTAG_BEFORE=$(date -d "-7 days" '+%FT%T')
+          IMAGE_PATH=gcr.io/mirrornode/hedera-mirror-grpc
+          OLD_IMAGES=$(gcloud container images list-tags ${IMAGE_PATH} \
+            --limit=1000 \
+            --sort-by=TIMESTAMP \
+            --filter="tags:master-* AND timestamp.datetime < '${UNTAG_BEFORE}'" \
+            --format="csv[no-heading](digest,tags,timestamp)")
+          for image in ${OLD_IMAGES[*]}; do
+          (
+            IFS=, read digest tag timestamp <<< ${image}
+            gcloud container images untag -q "${IMAGE_PATH}:${tag}"
+          )
+          done
+    - run:
+        name: Untags old master images
+        command: |
+          set -ex
+          UNTAG_BEFORE=$(date -d "-7 days" '+%FT%T')
+          IMAGE_PATH=gcr.io/mirrornode/hedera-mirror-importer
+          OLD_IMAGES=$(gcloud container images list-tags ${IMAGE_PATH} \
+            --limit=1000 \
+            --sort-by=TIMESTAMP \
+            --filter="tags:master-* AND timestamp.datetime < '${UNTAG_BEFORE}'" \
+            --format="csv[no-heading](digest,tags,timestamp)")
+          for image in ${OLD_IMAGES[*]}; do
+          (
+            IFS=, read digest tag timestamp <<< ${image}
+            gcloud container images untag -q "${IMAGE_PATH}:${tag}"
+          )
+          done
+    - run:
+        name: Untags old master images
+        command: |
+          set -ex
+          UNTAG_BEFORE=$(date -d "-7 days" '+%FT%T')
+          IMAGE_PATH=gcr.io/mirrornode/hedera-mirror-rest
+          OLD_IMAGES=$(gcloud container images list-tags ${IMAGE_PATH} \
+            --limit=1000 \
+            --sort-by=TIMESTAMP \
+            --filter="tags:master-* AND timestamp.datetime < '${UNTAG_BEFORE}'" \
+            --format="csv[no-heading](digest,tags,timestamp)")
+          for image in ${OLD_IMAGES[*]}; do
+          (
+            IFS=, read digest tag timestamp <<< ${image}
+            gcloud container images untag -q "${IMAGE_PATH}:${tag}"
+          )
+          done
+    - run:
+        name: Untags old master images
+        command: |
+          set -ex
+          UNTAG_BEFORE=$(date -d "-7 days" '+%FT%T')
+          IMAGE_PATH=gcr.io/mirrornode/hedera-mirror-test
+          OLD_IMAGES=$(gcloud container images list-tags ${IMAGE_PATH} \
+            --limit=1000 \
+            --sort-by=TIMESTAMP \
+            --filter="tags:master-* AND timestamp.datetime < '${UNTAG_BEFORE}'" \
+            --format="csv[no-heading](digest,tags,timestamp)")
+          for image in ${OLD_IMAGES[*]}; do
+          (
+            IFS=, read digest tag timestamp <<< ${image}
+            gcloud container images untag -q "${IMAGE_PATH}:${tag}"
+          )
+          done
+    - run:
+        name: Deletes old untagged images
+        command: |
+          set -ex
+          DELETE_BEFORE=$(date -d "-7 days" '+%FT%T')
+          IMAGE_PATH=gcr.io/mirrornode/hedera-mirror-grpc
+          OLD_IMAGES=$(gcloud container images list-tags ${IMAGE_PATH} \
+            --limit=1000 \
+            --sort-by=TIMESTAMP \
+            --filter="-tags:* AND timestamp.datetime < '${DELETE_BEFORE}'" \
+            --format="get(digest)")
+          for digest in ${OLD_IMAGES[*]}; do
+          (
+            gcloud container images delete -q "${IMAGE_PATH}@${digest}"
+          )
+          done
+    - run:
+        name: Deletes old untagged images
+        command: |
+          set -ex
+          DELETE_BEFORE=$(date -d "-7 days" '+%FT%T')
+          IMAGE_PATH=gcr.io/mirrornode/hedera-mirror-importer
+          OLD_IMAGES=$(gcloud container images list-tags ${IMAGE_PATH} \
+            --limit=1000 \
+            --sort-by=TIMESTAMP \
+            --filter="-tags:* AND timestamp.datetime < '${DELETE_BEFORE}'" \
+            --format="get(digest)")
+          for digest in ${OLD_IMAGES[*]}; do
+          (
+            gcloud container images delete -q "${IMAGE_PATH}@${digest}"
+          )
+          done
+    - run:
+        name: Deletes old untagged images
+        command: |
+          set -ex
+          DELETE_BEFORE=$(date -d "-7 days" '+%FT%T')
+          IMAGE_PATH=gcr.io/mirrornode/hedera-mirror-rest
+          OLD_IMAGES=$(gcloud container images list-tags ${IMAGE_PATH} \
+            --limit=1000 \
+            --sort-by=TIMESTAMP \
+            --filter="-tags:* AND timestamp.datetime < '${DELETE_BEFORE}'" \
+            --format="get(digest)")
+          for digest in ${OLD_IMAGES[*]}; do
+          (
+            gcloud container images delete -q "${IMAGE_PATH}@${digest}"
+          )
+          done
+    - run:
+        name: Deletes old untagged images
+        command: |
+          set -ex
+          DELETE_BEFORE=$(date -d "-7 days" '+%FT%T')
+          IMAGE_PATH=gcr.io/mirrornode/hedera-mirror-test
+          OLD_IMAGES=$(gcloud container images list-tags ${IMAGE_PATH} \
+            --limit=1000 \
+            --sort-by=TIMESTAMP \
+            --filter="-tags:* AND timestamp.datetime < '${DELETE_BEFORE}'" \
+            --format="get(digest)")
+          for digest in ${OLD_IMAGES[*]}; do
+          (
+            gcloud container images delete -q "${IMAGE_PATH}@${digest}"
+          )
+          done
+workflows:
+  main:
+    jobs:
+    - build_maven:
+        filters:
+          branches:
+            only: /.*/
+          tags:
+            only: /.*/
+    - build_rest:
+        filters:
+          branches:
+            only: /.*/
+          tags:
+            only: /.*/
+    - release_artifacts:
+        filters:
+          branches:
+            ignore: /.*/
+          tags:
+            only: /^v.*/
+        requires:
+        - build_maven
+        - build_rest
+    - publish_images:
+        filters:
+          branches:
+            ignore: /.*/
+          tags:
+            only: /^.*/
+        requires:
+        - build_maven
+        - build_rest
+    - perf_maven:
+        filters:
+          branches:
+            only: /.*/
+          tags:
+            only: /.*/
+    - cleanup_images:
+        filters:
+          branches:
+            ignore: /.*/
+          tags:
+            only: /^.*/
+  version: 2

@@ -229,12 +229,14 @@ jobs:
       - *docker_pubsub
       - *docker_redis
     steps:
+      # Ensure your image has git, otherwise the checkout step will fail
+      - run: apt-get -qq update; apt-get -y install git
       - checkout
       - restore_maven_cache
       - run:
           name: Resolve dependencies
           # See https://issues.apache.org/jira/browse/MDEP-516 for why we don't use maven-dependency-plugin
-          command: ./mvnw ${MAVEN_CLI_OPTS} de.qaware.maven:go-offline-maven-plugin:resolve-dependencies
+          command: cat pom.xml && ls -la ./hedera-mirror-rosetta && ./mvnw ${MAVEN_CLI_OPTS} de.qaware.maven:go-offline-maven-plugin:resolve-dependencies
       - save_maven_cache
       - write_spring_override_config
       - run:
