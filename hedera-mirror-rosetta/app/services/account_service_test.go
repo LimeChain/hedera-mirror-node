@@ -45,6 +45,14 @@ func exampleRequest(withBlockIdentifier bool) *rTypes.AccountBalanceRequest {
 	}
 }
 
+func TestNewAccountAPIService(t *testing.T) {
+	mocks.Setup()
+	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	accountService := NewAccountAPIService(commons, mocks.MAccountRepository)
+
+	assert.IsType(t, &AccountAPIService{}, accountService)
+}
+
 func TestAccountBalance(t *testing.T) {
 	// given:
 	exampleBlock := &types.Block{

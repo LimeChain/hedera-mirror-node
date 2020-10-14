@@ -4,12 +4,10 @@ go 1.13
 
 require (
 	github.com/caarlos0/env/v6 v6.3.0
-	github.com/coinbase/rosetta-cli v0.5.7 // indirect
 	github.com/coinbase/rosetta-sdk-go v0.4.9
 	github.com/hashgraph/hedera-sdk-go v0.9.1
 	github.com/jinzhu/gorm v1.9.16
 	github.com/lib/pq v1.8.0 // indirect
-	github.com/sqs/goreturns v0.0.0-20181028201513-538ac6014518 // indirect
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/crypto v0.0.0-20201002094018-c90954cbb977 // indirect
 	golang.org/x/net v0.0.0-20200930145003-4acb6c075d10 // indirect

@@ -75,6 +75,14 @@ func exampleBlockResponse() *rTypes.BlockResponse {
 	}
 }
 
+func TestNewBlockAPIService(t *testing.T) {
+	mocks.Setup()
+	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	blockService := NewBlockAPIService(commons)
+
+	assert.IsType(t, &BlockAPIService{}, blockService)
+}
+
 func TestBlock(t *testing.T) {
 	// given:
 	exampleBlock := &types.Block{

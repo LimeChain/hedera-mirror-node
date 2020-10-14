@@ -21,6 +21,7 @@
 package services
 
 import (
+	"github.com/coinbase/rosetta-sdk-go/server"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
@@ -29,6 +30,35 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
+
+func TestNewNetworkAPIService(t *testing.T) {
+	mocks.Setup()
+	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	networkService := networkAPIService(commons)
+
+	assert.IsType(t, &NetworkAPIService{}, networkService)
+}
+
+func networkAPIService(commons Commons) server.NetworkAPIServicer {
+	return NewNetworkAPIService(
+		commons,
+		mocks.MAddressBookEntryRepository,
+		&rTypes.NetworkIdentifier{
+			Blockchain: "SomeBlockchain",
+			Network:    "SomeNetwork",
+			SubNetworkIdentifier: &rTypes.SubNetworkIdentifier{
+				Network:  "SomeSumNetwork",
+				Metadata: nil,
+			},
+		},
+		&rTypes.Version{
+			RosettaVersion:    "1",
+			NodeVersion:       "1",
+			MiddlewareVersion: nil,
+			Metadata:          nil,
+		},
+	)
+}
 
 func TestNetworkList(t *testing.T) {
 	// given:
@@ -48,24 +78,7 @@ func TestNetworkList(t *testing.T) {
 	mocks.Setup()
 
 	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
-	networkService := NewNetworkAPIService(
-		commons,
-		mocks.MAddressBookEntryRepository,
-		&rTypes.NetworkIdentifier{
-			Blockchain: "SomeBlockchain",
-			Network:    "SomeNetwork",
-			SubNetworkIdentifier: &rTypes.SubNetworkIdentifier{
-				Network:  "SomeSumNetwork",
-				Metadata: nil,
-			},
-		},
-		&rTypes.Version{
-			RosettaVersion:    "1",
-			NodeVersion:       "1",
-			MiddlewareVersion: nil,
-			Metadata:          nil,
-		},
-	)
+	networkService := networkAPIService(commons)
 
 	// when:
 	res, e := networkService.NetworkList(nil, nil)
@@ -102,24 +115,7 @@ func TestNetworkOptions(t *testing.T) {
 	mocks.MTransactionRepository.On("TypesAsArray").Return([]string{"Transfer"})
 
 	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
-	networkService := NewNetworkAPIService(
-		commons,
-		mocks.MAddressBookEntryRepository,
-		&rTypes.NetworkIdentifier{
-			Blockchain: "SomeBlockchain",
-			Network:    "SomeNetwork",
-			SubNetworkIdentifier: &rTypes.SubNetworkIdentifier{
-				Network:  "SomeSubNetwork",
-				Metadata: nil,
-			},
-		},
-		&rTypes.Version{
-			RosettaVersion:    "1",
-			NodeVersion:       "1",
-			MiddlewareVersion: nil,
-			Metadata:          nil,
-		},
-	)
+	networkService := networkAPIService(commons)
 
 	// when:
 	res, e := networkService.NetworkOptions(nil, nil)
@@ -174,24 +170,7 @@ func TestNetworkStatus(t *testing.T) {
 	mocks.MAddressBookEntryRepository.On("Entries").Return(exampleEntries, mocks.NilError)
 
 	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
-	networkService := NewNetworkAPIService(
-		commons,
-		mocks.MAddressBookEntryRepository,
-		&rTypes.NetworkIdentifier{
-			Blockchain: "SomeBlockchain",
-			Network:    "SomeNetwork",
-			SubNetworkIdentifier: &rTypes.SubNetworkIdentifier{
-				Network:  "SomeSumNetwork",
-				Metadata: nil,
-			},
-		},
-		&rTypes.Version{
-			RosettaVersion:    "1",
-			NodeVersion:       "1",
-			MiddlewareVersion: nil,
-			Metadata:          nil,
-		},
-	)
+	networkService := networkAPIService(commons)
 
 	// when:
 	res, e := networkService.NetworkStatus(nil, nil)
@@ -207,24 +186,7 @@ func TestNetworkStatusThrowsWhenRetrieveGenesisFails(t *testing.T) {
 	mocks.MBlockRepository.On("RetrieveGenesis").Return(mocks.NilBlock, &rTypes.Error{})
 
 	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
-	networkService := NewNetworkAPIService(
-		commons,
-		mocks.MAddressBookEntryRepository,
-		&rTypes.NetworkIdentifier{
-			Blockchain: "SomeBlockchain",
-			Network:    "SomeNetwork",
-			SubNetworkIdentifier: &rTypes.SubNetworkIdentifier{
-				Network:  "SomeSumNetwork",
-				Metadata: nil,
-			},
-		},
-		&rTypes.Version{
-			RosettaVersion:    "1",
-			NodeVersion:       "1",
-			MiddlewareVersion: nil,
-			Metadata:          nil,
-		},
-	)
+	networkService := networkAPIService(commons)
 
 	// when:
 	res, e := networkService.NetworkStatus(nil, nil)
@@ -250,24 +212,7 @@ func TestNetworkStatusThrowsWhenRetrieveLatestFails(t *testing.T) {
 	mocks.MBlockRepository.On("RetrieveLatest").Return(mocks.NilBlock, &rTypes.Error{})
 
 	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
-	networkService := NewNetworkAPIService(
-		commons,
-		mocks.MAddressBookEntryRepository,
-		&rTypes.NetworkIdentifier{
-			Blockchain: "SomeBlockchain",
-			Network:    "SomeNetwork",
-			SubNetworkIdentifier: &rTypes.SubNetworkIdentifier{
-				Network:  "SomeSumNetwork",
-				Metadata: nil,
-			},
-		},
-		&rTypes.Version{
-			RosettaVersion:    "1",
-			NodeVersion:       "1",
-			MiddlewareVersion: nil,
-			Metadata:          nil,
-		},
-	)
+	networkService := networkAPIService(commons)
 
 	// when:
 	res, e := networkService.NetworkStatus(nil, nil)
@@ -303,24 +248,7 @@ func TestNetworkStatusThrowsWhenEntriesFail(t *testing.T) {
 	mocks.MAddressBookEntryRepository.On("Entries").Return(mocks.NilEntries, &rTypes.Error{})
 
 	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
-	networkService := NewNetworkAPIService(
-		commons,
-		mocks.MAddressBookEntryRepository,
-		&rTypes.NetworkIdentifier{
-			Blockchain: "SomeBlockchain",
-			Network:    "SomeNetwork",
-			SubNetworkIdentifier: &rTypes.SubNetworkIdentifier{
-				Network:  "SomeSumNetwork",
-				Metadata: nil,
-			},
-		},
-		&rTypes.Version{
-			RosettaVersion:    "1",
-			NodeVersion:       "1",
-			MiddlewareVersion: nil,
-			Metadata:          nil,
-		},
-	)
+	networkService := networkAPIService(commons)
 
 	// when:
 	res, e := networkService.NetworkStatus(nil, nil)
