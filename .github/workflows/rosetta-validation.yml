@@ -18,8 +18,8 @@ jobs:
     - name: Run Rosetta Mirror Node
       run: docker-compose up --build -d
 
-    - name: Wait for Mirror Node to start (60s)
-      run: sleep 60
+    - name: Wait for Mirror Node to start
+      run: bash ./.github/workflows/wait-for-mirror-node.sh
 
     - name: Run CLI Validation
       run: bash ./hedera-mirror-rosetta/validation/run-validation.sh
