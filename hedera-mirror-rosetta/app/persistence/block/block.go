@@ -55,7 +55,7 @@ const (
                                     FROM   (SELECT *
                                             FROM   record_file
                                             WHERE  file_hash = ?) AS rd,
-                                           (SELECT Count(*) - 1 AS block_index
+                                           (SELECT Count(*) - 1 - ? AS block_index
                                             FROM   record_file
                                             WHERE  consensus_end <= (SELECT consensus_end
                                                                      FROM   record_file
@@ -165,11 +165,10 @@ func (br *BlockRepository) findRecordFileByHash(hash string) (*recordFile, *rTyp
 	startingIndex := br.getRecordFilesStartingIndex()
 
 	rf := &recordFile{}
-	if br.dbClient.Raw(selectByHashWithIndex, hash, hash).Scan(rf).RecordNotFound() {
+	if br.dbClient.Raw(selectByHashWithIndex, hash, *startingIndex, hash).Scan(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
 	}
 
-	rf.BlockIndex = rf.BlockIndex - *startingIndex
 	if rf.BlockIndex < 0 {
 		return nil, errors.Errors[errors.BlockNotFound]
 	}
