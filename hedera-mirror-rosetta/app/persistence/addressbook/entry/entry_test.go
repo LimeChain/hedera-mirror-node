@@ -45,7 +45,7 @@ var (
 		},
 	}
 	expectedResult *types.AddressBookEntries = &types.AddressBookEntries{
-		Entries: []*types.AddressBookEntry{expectedAddressBookEntry},
+		Entries: []*types.AddressBookEntry{expectedAddressBookEntry, expectedAddressBookEntry},
 	}
 )
 
@@ -70,10 +70,11 @@ func TestShouldReturnCorrectAddressBookEntries(t *testing.T) {
 	aber, columns, mock := setupRepository(t)
 	defer aber.dbClient.DB().Close()
 
+	mockedRows := sqlmock.NewRows(columns).
+		AddRow(1, 1, "127.0.0.1", 0, "0.0.5", nil, nil, nil, nil).
+		AddRow(1, 1, "127.0.0.1", 0, "0.0.5", nil, nil, nil, nil)
 	mock.ExpectQuery(latestAddressBookEntries).
-		WillReturnRows(
-			sqlmock.NewRows(columns).
-				AddRow(1, 1, "127.0.0.1", 0, "0.0.5", nil, nil, nil, nil))
+		WillReturnRows(mockedRows)
 
 	// when
 	result, err := aber.Entries()
@@ -81,9 +82,11 @@ func TestShouldReturnCorrectAddressBookEntries(t *testing.T) {
 	// then
 	assert.Nil(t, mock.ExpectationsWereMet())
 
-	assert.Len(t, expectedResult.Entries, 1)
-	assert.Equal(t, expectedResult.Entries[0].Metadata, result.Entries[0].Metadata)
-	assert.Equal(t, expectedResult.Entries[0].PeerId, result.Entries[0].PeerId)
+	assert.Len(t, expectedResult.Entries, 2)
+	for i, resultEntry := range result.Entries {
+		assert.Equal(t, expectedResult.Entries[i].Metadata, resultEntry.Metadata)
+		assert.Equal(t, expectedResult.Entries[i].PeerId, resultEntry.PeerId)
+	}
 	assert.Nil(t, err)
 }
 
@@ -104,7 +107,8 @@ func TestShouldFailReturnEntries(t *testing.T) {
 	assert.Nil(t, mock.ExpectationsWereMet())
 
 	assert.Nil(t, result)
-	assert.Equal(t, errors.InternalServerError, err.Message)
+	assert.NotNil(t, err)
+	assert.Equal(t, errors.Errors[errors.InternalServerError], err)
 }
 
 func TestShouldReturnProperPeerId(t *testing.T) {
@@ -132,7 +136,8 @@ func TestShouldFailReturningProperPeerId(t *testing.T) {
 
 	// then
 	assert.Nil(t, result)
-	assert.Equal(t, errors.InternalServerError, err.Message)
+	assert.NotNil(t, err)
+	assert.Equal(t, errors.Errors[errors.InternalServerError], err)
 }
 
 func setupRepository(t *testing.T) (*AddressBookEntryRepository, []string, sqlmock.Sqlmock) {

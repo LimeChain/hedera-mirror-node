@@ -28,6 +28,10 @@ import (
 )
 
 const (
+	tableNameAccountBalance = "account_balance"
+)
+
+const (
 	balanceChangeBetween string = `SELECT
                                         SUM(amount::bigint) AS value,
                                         COUNT(consensus_timestamp) AS number_of_transfers
@@ -50,7 +54,7 @@ type balanceChange struct {
 
 // TableName - Set table name of the accountBalance to be `account_balance`
 func (accountBalance) TableName() string {
-	return "account_balance"
+	return tableNameAccountBalance
 }
 
 // AccountRepository struct that has connection to the Database

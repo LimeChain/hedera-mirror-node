@@ -37,6 +37,12 @@ import (
 )
 
 const (
+	tableNameTransaction        = "transaction"
+	tableNameTransactionTypes   = "t_transaction_types"
+	tableNameTransactionResults = "t_transaction_results"
+)
+
+const (
 	whereClauseBetweenConsensus         string = "consensus_ns >= ? AND consensus_ns <= ?"
 	whereTimestampsInConsensusTimestamp string = "consensus_timestamp IN (?)"
 )
@@ -70,17 +76,17 @@ type transactionResult struct {
 
 // TableName - Set table name of the Transactions to be `record_file`
 func (transaction) TableName() string {
-	return "transaction"
+	return tableNameTransaction
 }
 
 // TableName - Set table name of the Transaction Types to be `t_transaction_types`
 func (transactionType) TableName() string {
-	return "t_transaction_types"
+	return tableNameTransactionTypes
 }
 
 // TableName - Set table name of the Transaction Results to be `t_transaction_results`
 func (transactionResult) TableName() string {
-	return "t_transaction_results"
+	return tableNameTransactionResults
 }
 
 func (t *transaction) getHashString() string {
