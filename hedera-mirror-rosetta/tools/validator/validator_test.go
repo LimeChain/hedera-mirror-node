@@ -37,11 +37,10 @@ func TestValidateOperationsSum(t *testing.T) {
 		operations []*types.Operation
 		expected   *types.Error
 	}{
-		{
-			[]*types.Operation{
-				operationDummy,
-				operationDummyNegative,
-			}, nil},
+		{[]*types.Operation{
+			operationDummy,
+			operationDummyNegative,
+		}, nil},
 		{[]*types.Operation{
 			operationDummyNegative,
 		}, errors.Errors[errors.InvalidOperationsTotalAmount]},
