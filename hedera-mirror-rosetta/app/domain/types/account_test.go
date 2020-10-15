@@ -125,7 +125,7 @@ func TestComputeEncodedID(t *testing.T) {
 	}
 }
 
-func TestComputeEncodedIDNegativeData(t *testing.T) {
+func TestComputeEncodedIDThrows(t *testing.T) {
 	var testData = []struct {
 		shard, realm, number int64
 	}{
