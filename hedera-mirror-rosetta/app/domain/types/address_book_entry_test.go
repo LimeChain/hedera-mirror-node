@@ -24,44 +24,27 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	entityid "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/services/encoding"
 	"github.com/stretchr/testify/assert"
+	"reflect"
 	"testing"
 )
 
 func exampleAddressBookEntries() *AddressBookEntries {
 	return &AddressBookEntries{
 		[]*AddressBookEntry{
-			{
-				PeerId: &Account{
-					entityid.EntityId{
-						ShardNum:  0,
-						RealmNum:  0,
-						EntityNum: 0,
-					},
-				},
-				Metadata: map[string]interface{}{
-					"ip":   "123",
-					"port": "20514",
-				},
-			},
+			newDummyAddressBookEntry(0, 0, 1, dummyMetadata("someip", "someport")),
+			newDummyAddressBookEntry(0, 0, 2, dummyMetadata("someip2", "someport2")),
+			newDummyAddressBookEntry(0, 1, 3, dummyMetadata("someip3", "someport3")),
+			newDummyAddressBookEntry(10, 1, 3, dummyMetadata("someip3", "someport3")),
 		},
 	}
 }
 
 func expectedRosettaPeers() []*types.Peer {
 	return []*types.Peer{
-		{
-			PeerID: (&Account{
-				entityid.EntityId{
-					ShardNum:  0,
-					RealmNum:  0,
-					EntityNum: 0,
-				},
-			}).String(),
-			Metadata: map[string]interface{}{
-				"ip":   "123",
-				"port": "20514",
-			},
-		},
+		newDummyPeer(0, 0, 1, dummyMetadata("someip", "someport")),
+		newDummyPeer(0, 0, 2, dummyMetadata("someip2", "someport2")),
+		newDummyPeer(0, 1, 3, dummyMetadata("someip3", "someport3")),
+		newDummyPeer(10, 1, 3, dummyMetadata("someip3", "someport3")),
 	}
 }
 
@@ -70,6 +53,51 @@ func TestToRosettaPeers(t *testing.T) {
 	result := exampleAddressBookEntries().ToRosetta()
 
 	// then:
-	assert.Equal(t, expectedRosettaPeers(), result)
-	assert.Len(t, result, 1)
+	assert.Equal(t, len(expectedRosettaPeers()), len(result))
+
+	// and:
+	for _, a := range result {
+		found := false
+		for _, e := range result {
+			if reflect.DeepEqual(a, e) {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found)
+	}
+}
+
+func newDummyPeer(shard, realm, entity int64, metadata map[string]interface{}) *types.Peer {
+	return &types.Peer{
+		PeerID: (&Account{
+			entityid.EntityId{
+				ShardNum:  shard,
+				RealmNum:  realm,
+				EntityNum: entity,
+			},
+		}).String(),
+		Metadata: metadata,
+	}
+}
+
+func newDummyAddressBookEntry(shard, realm, entity int64, metadata map[string]interface{}) *AddressBookEntry {
+	return &AddressBookEntry{
+		PeerId: &Account{
+			entityid.EntityId{
+				ShardNum:  shard,
+				RealmNum:  realm,
+				EntityNum: entity,
+			},
+		},
+		Metadata: metadata,
+	}
+}
+
+func dummyMetadata(ip, port string) map[string]interface{} {
+	return map[string]interface {
+	}{
+		"ip":   ip,
+		"port": port,
+	}
 }
