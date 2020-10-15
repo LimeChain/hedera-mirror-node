@@ -31,6 +31,17 @@ import (
 )
 
 var (
+	dbAddressBookEntry = &addressBookEntry{
+		Id:                 1,
+		ConsensusTimestamp: 1,
+		Ip:                 "127.0.0.1",
+		Port:               0,
+		Memo:               "0.0.5",
+		PublicKey:          "",
+		NodeId:             0,
+		NodeAccountId:      0,
+		NodeCertHash:       nil,
+	}
 	entityId = &entityid.EntityId{
 		ShardNum:  0,
 		RealmNum:  0,
@@ -70,9 +81,10 @@ func TestShouldSuccessReturnAddressBookEntries(t *testing.T) {
 	aber, columns, mock := setupRepository(t)
 	defer aber.dbClient.DB().Close()
 
+	mockedRow := mocks.GetFieldsValuesAsDriverValue(dbAddressBookEntry)
 	mockedRows := sqlmock.NewRows(columns).
-		AddRow(1, 1, "127.0.0.1", 0, "0.0.5", nil, nil, nil, nil).
-		AddRow(1, 1, "127.0.0.1", 0, "0.0.5", nil, nil, nil, nil)
+		AddRow(mockedRow...).
+		AddRow(mockedRow...)
 	mock.ExpectQuery(latestAddressBookEntries).
 		WillReturnRows(mockedRows)
 
@@ -82,7 +94,7 @@ func TestShouldSuccessReturnAddressBookEntries(t *testing.T) {
 	// then
 	assert.Nil(t, mock.ExpectationsWereMet())
 
-	assert.Len(t, expectedResult.Entries, 2)
+	assert.Len(t, expectedResult.Entries, len(result.Entries))
 	for i, resultEntry := range result.Entries {
 		assert.Equal(t, expectedResult.Entries[i].Metadata, resultEntry.Metadata)
 		assert.Equal(t, expectedResult.Entries[i].PeerId, resultEntry.PeerId)
@@ -95,10 +107,22 @@ func TestShouldFailReturnEntriesDueToInvalidDbData(t *testing.T) {
 	aber, columns, mock := setupRepository(t)
 	defer aber.dbClient.DB().Close()
 
+	invalidData := &addressBookEntry{
+		Id:                 1,
+		ConsensusTimestamp: 1,
+		Ip:                 "127.0.0.1",
+		Port:               0,
+		Memo:               "0.0.a",
+		PublicKey:          "",
+		NodeId:             0,
+		NodeAccountId:      0,
+		NodeCertHash:       nil,
+	}
+
 	mock.ExpectQuery(latestAddressBookEntries).
 		WillReturnRows(
 			sqlmock.NewRows(columns).
-				AddRow(1, 1, "127.0.0.1", 0, "0.0.a", nil, nil, nil, nil))
+				AddRow(mocks.GetFieldsValuesAsDriverValue(invalidData)...))
 
 	// when
 	result, err := aber.Entries()
@@ -143,7 +167,7 @@ func TestShouldFailReturnPeerId(t *testing.T) {
 func setupRepository(t *testing.T) (*AddressBookEntryRepository, []string, sqlmock.Sqlmock) {
 	gormDbClient, mock := mocks.DatabaseMock(t)
 
-	columns := mocks.GetFieldsToSnakeCase(addressBookEntry{})
+	columns := mocks.GetFieldsNamesToSnakeCase(addressBookEntry{})
 
 	aber := NewAddressBookEntryRepository(gormDbClient)
 	return aber, columns, mock

@@ -23,7 +23,6 @@ package account
 import (
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
-	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 	"github.com/jinzhu/gorm"
 )
 
@@ -39,6 +38,11 @@ const (
                                    WHERE consensus_timestamp > ?
                                         AND consensus_timestamp <= ?
                                         AND entity_id = ?`
+	latestBalanceBeforeConsensus string = `SELECT *
+                                           FROM account_balance
+                                           WHERE (account_id = $1 AND consensus_timestamp <= $2)
+                                           ORDER BY consensus_timestamp DESC
+                                           LIMIT 1`
 )
 
 type accountBalance struct {
@@ -76,17 +80,12 @@ func (ar *AccountRepository) RetrieveBalanceAtBlock(addressStr string, consensus
 	if err != nil {
 		return nil, err
 	}
-	entityID, err1 := acc.ComputeEncodedID()
-	if err1 != nil {
-		return nil, errors.Errors[errors.InvalidAccount]
-	}
+	entityID, _ := acc.ComputeEncodedID()
 
 	// gets the most recent balance before block
 	ab := &accountBalance{}
 	if ar.dbClient.
-		Where("account_id=? AND consensus_timestamp <= ?", entityID, consensusEnd).
-		Order("consensus_timestamp desc").
-		Limit(1).
+		Raw(latestBalanceBeforeConsensus, entityID, consensusEnd).
 		Find(&ab).RecordNotFound() {
 		ab.Balance = 0
 	}

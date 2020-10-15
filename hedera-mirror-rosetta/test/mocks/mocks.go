@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"database/sql/driver"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/iancoleman/strcase"
 	"github.com/jinzhu/gorm"
@@ -23,20 +24,30 @@ func DatabaseMock(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 }
 
 // GetFieldsToSnakeCase returns an array of snake-cased fields names
-func GetFieldsToSnakeCase(v interface{}) []string {
-	fields := getFields(v)
+func GetFieldsNamesToSnakeCase(v interface{}) []string {
+	fields := getFieldsNames(v)
 	for i := 0; i < len(fields); i++ {
 		fields[i] = strcase.ToSnake(fields[i])
 	}
 	return fields
 }
 
-// getFields returns an array of fields names using reflection
-func getFields(v interface{}) []string {
+// getFieldsNames returns an array of fields names using reflection
+func getFieldsNames(v interface{}) []string {
 	value := reflect.Indirect(reflect.ValueOf(v))
 	var result []string
 	for i := 0; i < value.NumField(); i++ {
 		result = append(result, value.Type().Field(i).Name)
 	}
+	return result
+}
+
+func GetFieldsValuesAsDriverValue(v interface{}) []driver.Value {
+	value := reflect.Indirect(reflect.ValueOf(v))
+	var result []driver.Value
+	for i := 0; i < value.NumField(); i++ {
+		result = append(result, value.Field(i).Interface())
+	}
+
 	return result
 }

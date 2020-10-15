@@ -22,9 +22,21 @@ package account
 
 import (
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"testing"
+)
+
+var (
+	accountString      = "0.0.5"
+	consensusTimestamp = int64(2)
+	dbAccountBalance   = &accountBalance{
+		ConsensusTimestamp: 1,
+		Balance:            10,
+		AccountId:          int64(5),
+	}
+	expectedAmount = &types.Amount{Value: 10}
 )
 
 func TestShouldReturnValidAccountBalanceTableName(t *testing.T) {
@@ -45,24 +57,47 @@ func TestShouldSuccessReturnValidRepository(t *testing.T) {
 
 func TestShouldFailRetrieveBalanceAtBlockDueToInvalidAddress(t *testing.T) {
 	// given
-	abr, _, _ := setupRepository(t)
+	abr, _, mock := setupRepository(t)
 	defer abr.dbClient.DB().Close()
 
-	addressString := "0.0.a"
-	consensusEnd := int64(1)
+	invalidAddressString := "0.0.a"
 
 	// when
-	result, err := abr.RetrieveBalanceAtBlock(addressString, consensusEnd)
+	result, err := abr.RetrieveBalanceAtBlock(invalidAddressString, consensusTimestamp)
 
 	// then
+	assert.Nil(t, mock.ExpectationsWereMet())
 	assert.Nil(t, result)
 	assert.NotNil(t, err)
+}
+
+func TestShouldSuccessRetrieveBalanceAtBlock(t *testing.T) {
+	abr, columns, mock := setupRepository(t)
+	defer abr.dbClient.DB().Close()
+
+	mock.ExpectQuery(latestBalanceBeforeConsensus).
+		WithArgs("0.0.5", 10).
+		WillReturnRows(
+			sqlmock.NewRows(columns).
+				AddRow(1, 10, 5))
+
+	mock.ExpectQuery(balanceChangeBetween).WithArgs(1, 10, 5).WillReturnRows(
+		sqlmock.NewRows(columns).
+			AddRow(1, 10, 5))
+
+	// when
+	result, err := abr.RetrieveBalanceAtBlock("0.0.5", consensusTimestamp)
+
+	// then
+	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.Nil(t, err)
+	assert.NotNil(t, result)
 }
 
 func setupRepository(t *testing.T) (*AccountRepository, []string, sqlmock.Sqlmock) {
 	gormDbClient, mock := mocks.DatabaseMock(t)
 
-	columns := mocks.GetFieldsToSnakeCase(accountBalance{})
+	columns := mocks.GetFieldsNamesToSnakeCase(accountBalance{})
 
 	aber := NewAccountRepository(gormDbClient)
 	return aber, columns, mock
