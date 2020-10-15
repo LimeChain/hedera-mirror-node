@@ -21,6 +21,7 @@
 package account
 
 import (
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -30,7 +31,7 @@ func TestShouldReturnValidAccountBalanceTableName(t *testing.T) {
 	assert.Equal(t, tableNameAccountBalance, accountBalance{}.TableName())
 }
 
-func TestShouldReturnValidRepository(t *testing.T) {
+func TestShouldSuccessReturnValidRepository(t *testing.T) {
 	// given
 	gormDbClient, _ := mocks.DatabaseMock(t)
 
@@ -40,4 +41,29 @@ func TestShouldReturnValidRepository(t *testing.T) {
 	// then
 	assert.IsType(t, &AccountRepository{}, result)
 	assert.Equal(t, result.dbClient, gormDbClient)
+}
+
+func TestShouldFailRetrieveBalanceAtBlockDueToInvalidAddress(t *testing.T) {
+	// given
+	abr, _, _ := setupRepository(t)
+	defer abr.dbClient.DB().Close()
+
+	addressString := "0.0.a"
+	consensusEnd := int64(1)
+
+	// when
+	result, err := abr.RetrieveBalanceAtBlock(addressString, consensusEnd)
+
+	// then
+	assert.Nil(t, result)
+	assert.NotNil(t, err)
+}
+
+func setupRepository(t *testing.T) (*AccountRepository, []string, sqlmock.Sqlmock) {
+	gormDbClient, mock := mocks.DatabaseMock(t)
+
+	columns := mocks.GetFieldsToSnakeCase(accountBalance{})
+
+	aber := NewAccountRepository(gormDbClient)
+	return aber, columns, mock
 }

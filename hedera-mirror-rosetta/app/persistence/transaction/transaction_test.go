@@ -26,19 +26,19 @@ import (
 	"testing"
 )
 
-func TestShouldReturnValidTransactionTableName(t *testing.T) {
+func TestShouldSuccessReturnTransactionTableName(t *testing.T) {
 	assert.Equal(t, tableNameTransaction, transaction{}.TableName())
 }
 
-func TestShouldReturnValidTransactionTypesTableName(t *testing.T) {
+func TestShouldSuccessReturnTransactionTypesTableName(t *testing.T) {
 	assert.Equal(t, tableNameTransactionTypes, transactionType{}.TableName())
 }
 
-func TestShouldReturnValidTransactionResultsTableName(t *testing.T) {
+func TestShouldSuccessReturnTransactionResultsTableName(t *testing.T) {
 	assert.Equal(t, tableNameTransactionResults, transactionResult{}.TableName())
 }
 
-func TestShouldReturnValidRepository(t *testing.T) {
+func TestShouldSuccessReturnRepository(t *testing.T) {
 	// given
 	gormDbClient, _ := mocks.DatabaseMock(t)
 

@@ -53,7 +53,7 @@ func TestShouldSuccessReturnAddressBookEntryTableName(t *testing.T) {
 	assert.Equal(t, tableNameAddressBookEntry, addressBookEntry{}.TableName())
 }
 
-func TestShouldReturnValidRepository(t *testing.T) {
+func TestShouldSuccessReturnRepository(t *testing.T) {
 	// given
 	gormDbClient, _ := mocks.DatabaseMock(t)
 
@@ -90,7 +90,7 @@ func TestShouldSuccessReturnAddressBookEntries(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestShouldFailReturnEntries(t *testing.T) {
+func TestShouldFailReturnEntriesDueToInvalidDbData(t *testing.T) {
 	// given
 	aber, columns, mock := setupRepository(t)
 	defer aber.dbClient.DB().Close()

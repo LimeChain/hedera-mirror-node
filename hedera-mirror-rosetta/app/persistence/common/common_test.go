@@ -25,6 +25,6 @@ import (
 	"testing"
 )
 
-func TestShouldReturnValidCryptoTransferTableName(t *testing.T) {
+func TestShouldSuccessReturnCryptoTransferTableName(t *testing.T) {
 	assert.Equal(t, tableNameCryptoTransfer, CryptoTransfer{}.TableName())
 }

@@ -26,11 +26,11 @@ import (
 	"testing"
 )
 
-func TestShouldReturnValidRecordFileTableName(t *testing.T) {
+func TestShouldSuccessReturnRecordFileTableName(t *testing.T) {
 	assert.Equal(t, tableNameRecordFile, recordFile{}.TableName())
 }
 
-func TestShouldReturnValidRepository(t *testing.T) {
+func TestShouldSuccessReturnRepository(t *testing.T) {
 	// given
 	gormDbClient, _ := mocks.DatabaseMock(t)
 
