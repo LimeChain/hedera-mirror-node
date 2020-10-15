@@ -49,7 +49,7 @@ var (
 	}
 )
 
-func TestShouldReturnValidAddressBookEntryTableName(t *testing.T) {
+func TestShouldSuccessReturnAddressBookEntryTableName(t *testing.T) {
 	assert.Equal(t, tableNameAddressBookEntry, addressBookEntry{}.TableName())
 }
 
@@ -65,7 +65,7 @@ func TestShouldReturnValidRepository(t *testing.T) {
 	assert.Equal(t, result.dbClient, gormDbClient)
 }
 
-func TestShouldReturnCorrectAddressBookEntries(t *testing.T) {
+func TestShouldSuccessReturnAddressBookEntries(t *testing.T) {
 	// given
 	aber, columns, mock := setupRepository(t)
 	defer aber.dbClient.DB().Close()
@@ -111,7 +111,7 @@ func TestShouldFailReturnEntries(t *testing.T) {
 	assert.Equal(t, errors.Errors[errors.InternalServerError], err)
 }
 
-func TestShouldReturnProperPeerId(t *testing.T) {
+func TestShouldSuccessReturnPeerId(t *testing.T) {
 	// given
 	abe := addressBookEntry{
 		Memo: peerId.String(),
@@ -125,7 +125,7 @@ func TestShouldReturnProperPeerId(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestShouldFailReturningProperPeerId(t *testing.T) {
+func TestShouldFailReturnPeerId(t *testing.T) {
 	// given
 	abe := addressBookEntry{
 		Memo: "0.0.a",
