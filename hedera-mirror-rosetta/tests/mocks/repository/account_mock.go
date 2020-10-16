@@ -18,7 +18,7 @@
  * ‍
  */
 
-package mocks
+package repository
 
 import (
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"

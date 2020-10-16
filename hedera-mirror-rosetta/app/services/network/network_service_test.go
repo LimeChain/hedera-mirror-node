@@ -18,36 +18,37 @@
  * ‍
  */
 
-package services
+package network
 
 import (
 	"github.com/coinbase/rosetta-sdk-go/server"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
-	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/mocks"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/services/base"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tests/mocks/repository"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/maphelper"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestNewNetworkAPIService(t *testing.T) {
-	mocks.Setup()
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
-	networkService := networkAPIService(commons)
+	repository.Setup()
+	baseService := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
+	networkService := networkAPIService(baseService)
 
 	assert.IsType(t, &NetworkAPIService{}, networkService)
 }
 
-func networkAPIService(commons Commons) server.NetworkAPIServicer {
+func networkAPIService(base base.BaseService) server.NetworkAPIServicer {
 	return NewNetworkAPIService(
-		commons,
-		mocks.MAddressBookEntryRepository,
+		base,
+		repository.MAddressBookEntryRepository,
 		&rTypes.NetworkIdentifier{
 			Blockchain: "SomeBlockchain",
 			Network:    "SomeNetwork",
 			SubNetworkIdentifier: &rTypes.SubNetworkIdentifier{
-				Network:  "SomeSumNetwork",
+				Network:  "SomeSubNetwork",
 				Metadata: nil,
 			},
 		},
@@ -68,16 +69,16 @@ func TestNetworkList(t *testing.T) {
 				Blockchain: "SomeBlockchain",
 				Network:    "SomeNetwork",
 				SubNetworkIdentifier: &rTypes.SubNetworkIdentifier{
-					Network:  "SomeSumNetwork",
+					Network:  "SomeSubNetwork",
 					Metadata: nil,
 				},
 			},
 		},
 	}
 
-	mocks.Setup()
+	repository.Setup()
 
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
 	networkService := networkAPIService(commons)
 
 	// when:
@@ -110,11 +111,11 @@ func TestNetworkOptions(t *testing.T) {
 		},
 	}
 
-	mocks.Setup()
-	mocks.MTransactionRepository.On("Statuses").Return(map[int]string{1: "Pending"})
-	mocks.MTransactionRepository.On("TypesAsArray").Return([]string{"Transfer"})
+	repository.Setup()
+	repository.MTransactionRepository.On("Statuses").Return(map[int]string{1: "Pending"}, repository.NilError)
+	repository.MTransactionRepository.On("TypesAsArray").Return([]string{"Transfer"}, repository.NilError)
 
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
 	networkService := networkAPIService(commons)
 
 	// when:
@@ -164,12 +165,12 @@ func TestNetworkStatus(t *testing.T) {
 		Peers: []*rTypes.Peer{},
 	}
 
-	mocks.Setup()
-	mocks.MBlockRepository.On("RetrieveGenesis").Return(exampleGenesisBlock, mocks.NilError)
-	mocks.MBlockRepository.On("RetrieveLatest").Return(exampleLatestBlock, mocks.NilError)
-	mocks.MAddressBookEntryRepository.On("Entries").Return(exampleEntries, mocks.NilError)
+	repository.Setup()
+	repository.MBlockRepository.On("RetrieveGenesis").Return(exampleGenesisBlock, repository.NilError)
+	repository.MBlockRepository.On("RetrieveLatest").Return(exampleLatestBlock, repository.NilError)
+	repository.MAddressBookEntryRepository.On("Entries").Return(exampleEntries, repository.NilError)
 
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
 	networkService := networkAPIService(commons)
 
 	// when:
@@ -182,10 +183,10 @@ func TestNetworkStatus(t *testing.T) {
 
 func TestNetworkStatusThrowsWhenRetrieveGenesisFails(t *testing.T) {
 	// given:
-	mocks.Setup()
-	mocks.MBlockRepository.On("RetrieveGenesis").Return(mocks.NilBlock, &rTypes.Error{})
+	repository.Setup()
+	repository.MBlockRepository.On("RetrieveGenesis").Return(repository.NilBlock, &rTypes.Error{})
 
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
 	networkService := networkAPIService(commons)
 
 	// when:
@@ -207,11 +208,11 @@ func TestNetworkStatusThrowsWhenRetrieveLatestFails(t *testing.T) {
 		ParentHash:          "",
 	}
 
-	mocks.Setup()
-	mocks.MBlockRepository.On("RetrieveGenesis").Return(exampleGenesisBlock, mocks.NilError)
-	mocks.MBlockRepository.On("RetrieveLatest").Return(mocks.NilBlock, &rTypes.Error{})
+	repository.Setup()
+	repository.MBlockRepository.On("RetrieveGenesis").Return(exampleGenesisBlock, repository.NilError)
+	repository.MBlockRepository.On("RetrieveLatest").Return(repository.NilBlock, &rTypes.Error{})
 
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
 	networkService := networkAPIService(commons)
 
 	// when:
@@ -242,12 +243,12 @@ func TestNetworkStatusThrowsWhenEntriesFail(t *testing.T) {
 		ParentHash:          "0x123jsjs",
 	}
 
-	mocks.Setup()
-	mocks.MBlockRepository.On("RetrieveGenesis").Return(exampleGenesisBlock, mocks.NilError)
-	mocks.MBlockRepository.On("RetrieveLatest").Return(exampleLatestBlock, mocks.NilError)
-	mocks.MAddressBookEntryRepository.On("Entries").Return(mocks.NilEntries, &rTypes.Error{})
+	repository.Setup()
+	repository.MBlockRepository.On("RetrieveGenesis").Return(exampleGenesisBlock, repository.NilError)
+	repository.MBlockRepository.On("RetrieveLatest").Return(exampleLatestBlock, repository.NilError)
+	repository.MAddressBookEntryRepository.On("Entries").Return(repository.NilEntries, &rTypes.Error{})
 
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
 	networkService := networkAPIService(commons)
 
 	// when:

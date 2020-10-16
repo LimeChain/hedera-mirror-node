@@ -18,7 +18,7 @@
  * ‍
  */
 
-package services
+package network
 
 import (
 	"context"
@@ -26,13 +26,14 @@ import (
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/repositories/addressbook/entry"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/services/base"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/hex"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/maphelper"
 )
 
 // NetworkAPIService implements the server.NetworkAPIServicer interface.
 type NetworkAPIService struct {
-	Commons
+	base.BaseService
 	addressBookEntryRepo repositories.AddressBookEntryRepository
 	network              *types.NetworkIdentifier
 	version              *types.Version
@@ -49,7 +50,7 @@ func (n *NetworkAPIService) NetworkList(ctx context.Context, request *types.Meta
 
 // NetworkOptions implements the /network/options endpoint.
 func (n *NetworkAPIService) NetworkOptions(ctx context.Context, request *types.NetworkRequest) (*types.NetworkOptionsResponse, *types.Error) {
-	statuses := maphelper.GetStringValuesFromIntStringMap(n.transactionRepo.Statuses())
+	statuses := maphelper.GetStringValuesFromIntStringMap(n.Statuses())
 	operationStatuses := make([]*types.OperationStatus, 0, len(statuses))
 
 	for _, v := range statuses {
@@ -63,7 +64,7 @@ func (n *NetworkAPIService) NetworkOptions(ctx context.Context, request *types.N
 		Version: n.version,
 		Allow: &types.Allow{
 			OperationStatuses:       operationStatuses,
-			OperationTypes:          n.transactionRepo.TypesAsArray(),
+			OperationTypes:          n.TypesAsArray(),
 			Errors:                  maphelper.GetErrorValuesFromStringErrorMap(errors.Errors),
 			HistoricalBalanceLookup: true,
 		},
@@ -72,12 +73,12 @@ func (n *NetworkAPIService) NetworkOptions(ctx context.Context, request *types.N
 
 // NetworkStatus implements the /network/status endpoint.
 func (n *NetworkAPIService) NetworkStatus(ctx context.Context, request *types.NetworkRequest) (*types.NetworkStatusResponse, *types.Error) {
-	genesisBlock, err := n.blockRepo.RetrieveGenesis()
+	genesisBlock, err := n.RetrieveGenesis()
 	if err != nil {
 		return nil, err
 	}
 
-	latestBlock, err := n.blockRepo.RetrieveLatest()
+	latestBlock, err := n.RetrieveLatest()
 	if err != nil {
 		return nil, err
 	}
@@ -102,11 +103,11 @@ func (n *NetworkAPIService) NetworkStatus(ctx context.Context, request *types.Ne
 }
 
 // NewNetworkAPIService creates a new instance of a NetworkAPIService.
-func NewNetworkAPIService(commons Commons,
+func NewNetworkAPIService(commons base.BaseService,
 	addressBookEntryRepo repositories.AddressBookEntryRepository,
 	network *types.NetworkIdentifier, version *types.Version) server.NetworkAPIServicer {
 	return &NetworkAPIService{
-		Commons:              commons,
+		BaseService:          commons,
 		addressBookEntryRepo: addressBookEntryRepo,
 		network:              network,
 		version:              version,

@@ -18,12 +18,13 @@
  * ‍
  */
 
-package services
+package block
 
 import (
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
-	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/mocks"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/services/base"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tests/mocks/repository"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -76,9 +77,9 @@ func exampleBlockResponse() *rTypes.BlockResponse {
 }
 
 func TestNewBlockAPIService(t *testing.T) {
-	mocks.Setup()
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
-	blockService := NewBlockAPIService(commons)
+	repository.Setup()
+	baseService := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
+	blockService := NewBlockAPIService(baseService)
 
 	assert.IsType(t, &BlockAPIService{}, blockService)
 }
@@ -105,11 +106,11 @@ func TestBlock(t *testing.T) {
 		},
 	}
 
-	mocks.Setup()
-	mocks.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, mocks.NilError)
-	mocks.MTransactionRepository.On("FindBetween").Return(exampleTransactions, mocks.NilError)
+	repository.Setup()
+	repository.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, repository.NilError)
+	repository.MTransactionRepository.On("FindBetween").Return(exampleTransactions, repository.NilError)
 
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
 	blockService := NewBlockAPIService(commons)
 
 	// when:
@@ -122,13 +123,13 @@ func TestBlock(t *testing.T) {
 
 func TestBlockThrowsWhenFindByIdentifierFails(t *testing.T) {
 	// given:
-	mocks.Setup()
-	mocks.MBlockRepository.On("FindByIdentifier").Return(
-		mocks.NilBlock,
+	repository.Setup()
+	repository.MBlockRepository.On("FindByIdentifier").Return(
+		repository.NilBlock,
 		&rTypes.Error{},
 	)
 
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
 	blockService := NewBlockAPIService(commons)
 
 	// when:
@@ -150,14 +151,14 @@ func TestBlockThrowsWhenFindBetweenFails(t *testing.T) {
 		ParentHash:          "0xparenthash",
 	}
 
-	mocks.Setup()
-	mocks.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, mocks.NilError)
-	mocks.MTransactionRepository.On("FindBetween").Return(
+	repository.Setup()
+	repository.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, repository.NilError)
+	repository.MTransactionRepository.On("FindBetween").Return(
 		[]*types.Transaction{},
 		&rTypes.Error{},
 	)
 
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
 	blockService := NewBlockAPIService(commons)
 
 	// when:
@@ -206,11 +207,11 @@ func TestBlockTransaction(t *testing.T) {
 		Metadata:              nil,
 	}}
 
-	mocks.Setup()
-	mocks.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, mocks.NilError)
-	mocks.MTransactionRepository.On("FindByHashInBlock").Return(exampleTransaction, mocks.NilError)
+	repository.Setup()
+	repository.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, repository.NilError)
+	repository.MTransactionRepository.On("FindByHashInBlock").Return(exampleTransaction, repository.NilError)
 
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
 	blockService := NewBlockAPIService(commons)
 
 	// when:
@@ -239,10 +240,10 @@ func TestBlockTransactionThrowsWhenFindByIdentifierFails(t *testing.T) {
 		TransactionIdentifier: &rTypes.TransactionIdentifier{Hash: "somehash"},
 	}
 
-	mocks.Setup()
-	mocks.MBlockRepository.On("FindByIdentifier").Return(mocks.NilBlock, &rTypes.Error{})
+	repository.Setup()
+	repository.MBlockRepository.On("FindByIdentifier").Return(repository.NilBlock, &rTypes.Error{})
 
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
 	blockService := NewBlockAPIService(commons)
 
 	// when:
@@ -280,11 +281,11 @@ func TestBlockTransactionThrowsWhenFindByHashInBlockFails(t *testing.T) {
 		TransactionIdentifier: &rTypes.TransactionIdentifier{Hash: "somehash"},
 	}
 
-	mocks.Setup()
-	mocks.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, mocks.NilError)
-	mocks.MTransactionRepository.On("FindByHashInBlock").Return(mocks.NilTransaction, &rTypes.Error{})
+	repository.Setup()
+	repository.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, repository.NilError)
+	repository.MTransactionRepository.On("FindByHashInBlock").Return(repository.NilTransaction, &rTypes.Error{})
 
-	commons := NewCommons(mocks.MBlockRepository, mocks.MTransactionRepository)
+	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
 	blockService := NewBlockAPIService(commons)
 
 	// when:

@@ -18,18 +18,18 @@
  * ‍
  */
 
-package services
+package mempool
 
 import (
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
-	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/mocks"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tests/mocks/repository"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestNewMempoolAPIService(t *testing.T) {
-	mocks.Setup()
+	repository.Setup()
 	mempoolService := NewMempoolAPIService()
 
 	assert.IsType(t, &MempoolAPIService{}, mempoolService)

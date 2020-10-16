@@ -18,7 +18,7 @@
  * ‍
  */
 
-package mocks
+package repository
 
 import (
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
@@ -26,30 +26,30 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type MockTransactionRepository struct {
+type MockBlockRepository struct {
 	mock.Mock
 }
 
-func (m MockTransactionRepository) FindByHashInBlock(identifier string, consensusStart int64, consensusEnd int64) (*types.Transaction, *rTypes.Error) {
-	args := m.Called()
-	return args.Get(0).(*types.Transaction), args.Get(1).(*rTypes.Error)
-}
-
-func (m MockTransactionRepository) FindBetween(start int64, end int64) ([]*types.Transaction, *rTypes.Error) {
-	args := m.Called()
-	return args.Get(0).([]*types.Transaction), args.Get(1).(*rTypes.Error)
-}
-
-func (m MockTransactionRepository) Types() map[int]string {
+func (m MockBlockRepository) FindByIndex(index int64) (*types.Block, *rTypes.Error) {
 	panic("implement me")
 }
 
-func (m MockTransactionRepository) TypesAsArray() []string {
+func (m MockBlockRepository) FindByHash(hash string) (*types.Block, *rTypes.Error) {
 	args := m.Called()
-	return args.Get(0).([]string)
+	return args.Get(0).(*types.Block), args.Get(1).(*rTypes.Error)
 }
 
-func (m MockTransactionRepository) Statuses() map[int]string {
+func (m MockBlockRepository) FindByIdentifier(index int64, hash string) (*types.Block, *rTypes.Error) {
 	args := m.Called()
-	return args.Get(0).(map[int]string)
+	return args.Get(0).(*types.Block), args.Get(1).(*rTypes.Error)
+}
+
+func (m MockBlockRepository) RetrieveGenesis() (*types.Block, *rTypes.Error) {
+	args := m.Called()
+	return args.Get(0).(*types.Block), args.Get(1).(*rTypes.Error)
+}
+
+func (m MockBlockRepository) RetrieveLatest() (*types.Block, *rTypes.Error) {
+	args := m.Called()
+	return args.Get(0).(*types.Block), args.Get(1).(*rTypes.Error)
 }

@@ -18,19 +18,27 @@
  * ‍
  */
 
-package mocks
+package repository
 
 import (
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
-	"github.com/stretchr/testify/mock"
 )
 
-type MockAddressBookEntryRepository struct {
-	mock.Mock
-}
+var MBlockRepository *MockBlockRepository
+var MTransactionRepository *MockTransactionRepository
+var MAccountRepository *MockAccountRepository
+var MAddressBookEntryRepository *MockAddressBookEntryRepository
 
-func (m MockAddressBookEntryRepository) Entries() (*types.AddressBookEntries, *rTypes.Error) {
-	args := m.Called()
-	return args.Get(0).(*types.AddressBookEntries), args.Get(1).(*rTypes.Error)
+var NilBlock *types.Block = nil
+var NilError *rTypes.Error = nil
+var NilAmount *types.Amount = nil
+var NilTransaction *types.Transaction = nil
+var NilEntries *types.AddressBookEntries = nil
+
+func Setup() {
+	MBlockRepository = &MockBlockRepository{}
+	MTransactionRepository = &MockTransactionRepository{}
+	MAccountRepository = &MockAccountRepository{}
+	MAddressBookEntryRepository = &MockAddressBookEntryRepository{}
 }
