@@ -30,26 +30,26 @@ type MockTransactionRepository struct {
 	mock.Mock
 }
 
-func (m MockTransactionRepository) FindByHashInBlock(identifier string, consensusStart int64, consensusEnd int64) (*types.Transaction, *rTypes.Error) {
+func (m *MockTransactionRepository) FindByHashInBlock(identifier string, consensusStart int64, consensusEnd int64) (*types.Transaction, *rTypes.Error) {
 	args := m.Called()
 	return args.Get(0).(*types.Transaction), args.Get(1).(*rTypes.Error)
 }
 
-func (m MockTransactionRepository) FindBetween(start int64, end int64) ([]*types.Transaction, *rTypes.Error) {
+func (m *MockTransactionRepository) FindBetween(start int64, end int64) ([]*types.Transaction, *rTypes.Error) {
 	args := m.Called()
 	return args.Get(0).([]*types.Transaction), args.Get(1).(*rTypes.Error)
 }
 
-func (m MockTransactionRepository) Types() map[int]string {
+func (m *MockTransactionRepository) Types() (map[int]string, *rTypes.Error) {
 	panic("implement me")
 }
 
-func (m MockTransactionRepository) TypesAsArray() []string {
+func (m *MockTransactionRepository) TypesAsArray() ([]string, *rTypes.Error) {
 	args := m.Called()
-	return args.Get(0).([]string)
+	return args.Get(0).([]string), args.Get(1).(*rTypes.Error)
 }
 
-func (m MockTransactionRepository) Statuses() map[int]string {
+func (m *MockTransactionRepository) Statuses() (map[int]string, *rTypes.Error) {
 	args := m.Called()
-	return args.Get(0).(map[int]string)
+	return args.Get(0).(map[int]string), args.Get(1).(*rTypes.Error)
 }
