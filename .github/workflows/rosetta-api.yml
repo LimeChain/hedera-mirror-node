@@ -17,7 +17,7 @@ jobs:
       - run: go build -i -o rosetta cmd/*
         working-directory: ${{env.working-directory}}
       - uses: actions/upload-artifact@master
-        working-directory: ${{env.working-directory}}
         with:
           name: hedera-mirror-rosetta
-          path: rosetta
+          path: ${{ env.working-directory }}/rosetta
+          if-no-files-found: error
