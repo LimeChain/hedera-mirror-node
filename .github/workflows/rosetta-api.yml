@@ -45,5 +45,5 @@ jobs:
         with:
           name: ${{ env.code-cov-report }}
           path: ./coverage.txt
-      - run: bash <(curl -s https://codecov.io/bash)
+      - run: ls -la && bash <(curl -s https://codecov.io/bash)
 
