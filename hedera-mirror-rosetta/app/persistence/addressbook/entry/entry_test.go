@@ -94,11 +94,7 @@ func TestShouldSuccessReturnAddressBookEntries(t *testing.T) {
 	// then
 	assert.Nil(t, mock.ExpectationsWereMet())
 
-	assert.Len(t, expectedResult.Entries, len(result.Entries))
-	for i, resultEntry := range result.Entries {
-		assert.Equal(t, expectedResult.Entries[i].Metadata, resultEntry.Metadata)
-		assert.Equal(t, expectedResult.Entries[i].PeerId, resultEntry.PeerId)
-	}
+	assert.Equal(t, expectedResult.Entries, result.Entries)
 	assert.Nil(t, err)
 }
 

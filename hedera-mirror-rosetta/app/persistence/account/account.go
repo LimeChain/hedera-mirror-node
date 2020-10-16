@@ -35,9 +35,9 @@ const (
                                         SUM(amount::bigint) AS value,
                                         COUNT(consensus_timestamp) AS number_of_transfers
                                    FROM crypto_transfer
-                                   WHERE consensus_timestamp > ?
-                                        AND consensus_timestamp <= ?
-                                        AND entity_id = ?`
+                                   WHERE consensus_timestamp > $1
+                                        AND consensus_timestamp <= $2
+                                        AND entity_id = $3`
 	latestBalanceBeforeConsensus string = `SELECT *
                                            FROM account_balance
                                            WHERE (account_id = $1 AND consensus_timestamp <= $2)

@@ -24,7 +24,9 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/test/mocks"
+	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
+	"regexp"
 	"testing"
 )
 
@@ -34,9 +36,13 @@ var (
 	dbAccountBalance   = &accountBalance{
 		ConsensusTimestamp: 1,
 		Balance:            10,
-		AccountId:          int64(5),
+		AccountId:          5,
 	}
-	expectedAmount = &types.Amount{Value: 10}
+	dbBalanceChange = &balanceChange{
+		Value:             10,
+		NumberOfTransfers: 20,
+	}
+	expectedAmount = &types.Amount{Value: dbBalanceChange.Value + dbAccountBalance.Balance}
 )
 
 func TestShouldReturnValidAccountBalanceTableName(t *testing.T) {
@@ -75,23 +81,53 @@ func TestShouldSuccessRetrieveBalanceAtBlock(t *testing.T) {
 	abr, columns, mock := setupRepository(t)
 	defer abr.dbClient.DB().Close()
 
-	mock.ExpectQuery(latestBalanceBeforeConsensus).
-		WithArgs("0.0.5", 10).
+	mock.ExpectQuery(regexp.QuoteMeta(latestBalanceBeforeConsensus)).
+		WithArgs(dbAccountBalance.AccountId, consensusTimestamp).
 		WillReturnRows(
 			sqlmock.NewRows(columns).
-				AddRow(1, 10, 5))
+				AddRow(mocks.GetFieldsValuesAsDriverValue(dbAccountBalance)...))
 
-	mock.ExpectQuery(balanceChangeBetween).WithArgs(1, 10, 5).WillReturnRows(
-		sqlmock.NewRows(columns).
-			AddRow(1, 10, 5))
+	mock.ExpectQuery(regexp.QuoteMeta(balanceChangeBetween)).
+		WithArgs(dbAccountBalance.ConsensusTimestamp, consensusTimestamp, dbAccountBalance.AccountId).
+		WillReturnRows(
+			sqlmock.NewRows(mocks.GetFieldsNamesToSnakeCase(dbBalanceChange)).
+				AddRow(mocks.GetFieldsValuesAsDriverValue(dbBalanceChange)...))
 
 	// when
-	result, err := abr.RetrieveBalanceAtBlock("0.0.5", consensusTimestamp)
+	result, err := abr.RetrieveBalanceAtBlock(accountString, consensusTimestamp)
 
 	// then
 	assert.Nil(t, mock.ExpectationsWereMet())
+
+	assert.Equal(t, expectedAmount, result)
 	assert.Nil(t, err)
-	assert.NotNil(t, result)
+}
+
+func TestShouldSuccessRetrieveBalanceAtBlockWithNoSnapshotsBeforeThat(t *testing.T) {
+	abr, _, mock := setupRepository(t)
+	defer abr.dbClient.DB().Close()
+
+	dbAccountBalance.ConsensusTimestamp = 0
+	expectedAmount.Value = dbBalanceChange.Value
+
+	mock.ExpectQuery(regexp.QuoteMeta(latestBalanceBeforeConsensus)).
+		WithArgs(dbAccountBalance.AccountId, consensusTimestamp).
+		WillReturnError(gorm.ErrRecordNotFound)
+
+	mock.ExpectQuery(regexp.QuoteMeta(balanceChangeBetween)).
+		WithArgs(dbAccountBalance.ConsensusTimestamp, consensusTimestamp, dbAccountBalance.AccountId).
+		WillReturnRows(
+			sqlmock.NewRows(mocks.GetFieldsNamesToSnakeCase(dbBalanceChange)).
+				AddRow(mocks.GetFieldsValuesAsDriverValue(dbBalanceChange)...))
+
+	// when
+	result, err := abr.RetrieveBalanceAtBlock(accountString, consensusTimestamp)
+
+	// then
+	assert.Nil(t, mock.ExpectationsWereMet())
+
+	assert.Equal(t, expectedAmount, result)
+	assert.Nil(t, err)
 }
 
 func setupRepository(t *testing.T) (*AccountRepository, []string, sqlmock.Sqlmock) {
