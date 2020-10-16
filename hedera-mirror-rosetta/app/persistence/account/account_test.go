@@ -31,18 +31,21 @@ import (
 )
 
 var (
-	accountString      = "0.0.5"
-	consensusTimestamp = int64(2)
-	dbAccountBalance   = &accountBalance{
+	accountString        = "0.0.5"
+	balanceChangeColumns = mocks.GetFieldsNamesToSnakeCase(dbBalanceChange)
+	consensusTimestamp   = int64(2)
+	dbAccountBalance     = &accountBalance{
 		ConsensusTimestamp: 1,
 		Balance:            10,
 		AccountId:          5,
 	}
-	dbBalanceChange = &balanceChange{
+	dbAccountBalanceRow = mocks.GetFieldsValuesAsDriverValue(dbAccountBalance)
+	dbBalanceChange     = &balanceChange{
 		Value:             10,
 		NumberOfTransfers: 20,
 	}
-	expectedAmount = &types.Amount{Value: dbBalanceChange.Value + dbAccountBalance.Balance}
+	dbBalanceChangeRow = mocks.GetFieldsValuesAsDriverValue(dbBalanceChange)
+	expectedAmount     = &types.Amount{Value: dbBalanceChange.Value + dbAccountBalance.Balance}
 )
 
 func TestShouldReturnValidAccountBalanceTableName(t *testing.T) {
@@ -85,13 +88,13 @@ func TestShouldSuccessRetrieveBalanceAtBlock(t *testing.T) {
 		WithArgs(dbAccountBalance.AccountId, consensusTimestamp).
 		WillReturnRows(
 			sqlmock.NewRows(columns).
-				AddRow(mocks.GetFieldsValuesAsDriverValue(dbAccountBalance)...))
+				AddRow(dbAccountBalanceRow...))
 
 	mock.ExpectQuery(regexp.QuoteMeta(balanceChangeBetween)).
 		WithArgs(dbAccountBalance.ConsensusTimestamp, consensusTimestamp, dbAccountBalance.AccountId).
 		WillReturnRows(
-			sqlmock.NewRows(mocks.GetFieldsNamesToSnakeCase(dbBalanceChange)).
-				AddRow(mocks.GetFieldsValuesAsDriverValue(dbBalanceChange)...))
+			sqlmock.NewRows(balanceChangeColumns).
+				AddRow(dbBalanceChangeRow...))
 
 	// when
 	result, err := abr.RetrieveBalanceAtBlock(accountString, consensusTimestamp)
@@ -117,8 +120,8 @@ func TestShouldSuccessRetrieveBalanceAtBlockWithNoSnapshotsBeforeThat(t *testing
 	mock.ExpectQuery(regexp.QuoteMeta(balanceChangeBetween)).
 		WithArgs(dbAccountBalance.ConsensusTimestamp, consensusTimestamp, dbAccountBalance.AccountId).
 		WillReturnRows(
-			sqlmock.NewRows(mocks.GetFieldsNamesToSnakeCase(dbBalanceChange)).
-				AddRow(mocks.GetFieldsValuesAsDriverValue(dbBalanceChange)...))
+			sqlmock.NewRows(balanceChangeColumns).
+				AddRow(dbBalanceChangeRow...))
 
 	// when
 	result, err := abr.RetrieveBalanceAtBlock(accountString, consensusTimestamp)
