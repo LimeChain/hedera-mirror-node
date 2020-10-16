@@ -94,7 +94,7 @@ func TestShouldSuccessReturnAddressBookEntries(t *testing.T) {
 	// then
 	assert.Nil(t, mock.ExpectationsWereMet())
 
-	assert.Equal(t, expectedResult.Entries, result.Entries)
+	assert.Equal(t, expectedResult, result)
 	assert.Nil(t, err)
 }
 

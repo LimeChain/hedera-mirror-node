@@ -21,6 +21,9 @@
 package transaction
 
 import (
+	entityid "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/services/encoding"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -48,4 +51,40 @@ func TestShouldSuccessReturnRepository(t *testing.T) {
 	// then
 	assert.IsType(t, &TransactionRepository{}, result)
 	assert.Equal(t, result.dbClient, gormDbClient)
+}
+
+func TestShouldSuccessIntsToString(t *testing.T) {
+	data := []int64{1, 2, 2394238471841, 2394143718391293}
+	expected := "1,2,2394238471841,2394143718391293"
+
+	result := intsToString(data)
+
+	assert.Equal(t, expected, result)
+}
+
+func TestShouldFailConstructAccount(t *testing.T) {
+	data := int64(-1)
+	expected := errors.Errors[errors.InternalServerError]
+
+	result, err := constructAccount(data)
+
+	assert.Nil(t, result)
+	assert.Equal(t, expected, err)
+}
+
+func TestShouldSuccessConstructAccount(t *testing.T) {
+	// given
+	data := int64(5)
+	expected := &types.Account{EntityId: entityid.EntityId{
+		ShardNum:  0,
+		RealmNum:  0,
+		EntityNum: 5,
+	}}
+
+	// when
+	result, err := constructAccount(data)
+
+	// then
+	assert.Nil(t, err)
+	assert.Equal(t, expected, result)
 }
