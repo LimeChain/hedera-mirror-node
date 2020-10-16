@@ -37,6 +37,7 @@ jobs:
             path: ${{ env.working-directory }}/${{ env.code-cov-report }}
             if-no-files-found: error
   upload-report:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@master
