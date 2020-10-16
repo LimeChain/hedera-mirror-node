@@ -30,21 +30,28 @@ import (
 	"testing"
 )
 
-var (
-	exampleBlock = &types.Block{
+func getSubject() *AccountAPIService {
+	return NewAccountAPIService(baseService(), repository.MAccountRepository)
+}
+
+func block() *types.Block {
+	return &types.Block{
 		Index:               1,
-		Hash:                "0x123jsjs",
+		Hash:                "123jsjs",
 		ConsensusStartNanos: 1000000,
 		ConsensusEndNanos:   20000000,
-		ParentIndex:         2,
-		ParentHash:          "0xparenthash",
+		ParentIndex:         0,
+		ParentHash:          "parenthash",
 	}
-	exampleAmount = &types.Amount{
+}
+
+func amount() *types.Amount {
+	return &types.Amount{
 		Value: int64(1000),
 	}
-)
+}
 
-func exampleRequest(withBlockIdentifier bool) *rTypes.AccountBalanceRequest {
+func request(withBlockIdentifier bool) *rTypes.AccountBalanceRequest {
 	var blockIdentifier *rTypes.PartialBlockIdentifier = nil
 	if withBlockIdentifier {
 		index := int64(1)
@@ -60,106 +67,106 @@ func exampleRequest(withBlockIdentifier bool) *rTypes.AccountBalanceRequest {
 	}
 }
 
+func baseService() base.BaseService {
+	return base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
+}
+
+func expectedAccountBalanceResponse() *rTypes.AccountBalanceResponse {
+	return &rTypes.AccountBalanceResponse{
+		BlockIdentifier: &rTypes.BlockIdentifier{
+			Index: 1,
+			Hash:  "0x123jsjs",
+		},
+		Balances: []*rTypes.Amount{
+			{
+				Value:    "1000",
+				Currency: config.CurrencyHbar,
+			},
+		},
+	}
+}
+
 func TestNewAccountAPIService(t *testing.T) {
 	repository.Setup()
-	baseService := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	accountService := NewAccountAPIService(baseService, repository.MAccountRepository)
-
-	assert.IsType(t, &AccountAPIService{}, accountService)
-	assert.Equal(t, baseService, accountService.BaseService, "BaseService was not populated correctly")
-	assert.Equal(t, repository.MAccountRepository, accountService.accountRepo, "AccountsRepository was not populated correctly")
+	assert.IsType(t, &AccountAPIService{}, getSubject())
+	assert.Equal(t, baseService(), getSubject().BaseService, "BaseService was not populated correctly")
+	assert.Equal(t, repository.MAccountRepository, getSubject().accountRepo, "AccountsRepository was not populated correctly")
 }
 
 func TestAccountBalance(t *testing.T) {
 	// given:
-	expectedAccountBalanceResponse := &rTypes.AccountBalanceResponse{
-		BlockIdentifier: &rTypes.BlockIdentifier{
-			Index: 1,
-			Hash:  "0x123jsjs",
-		},
-		Balances: []*rTypes.Amount{
-			{
-				Value:    "1000",
-				Currency: config.CurrencyHbar,
-			},
-		},
-	}
-
 	repository.Setup()
-	repository.MBlockRepository.On("RetrieveLatest").Return(exampleBlock, repository.NilError)
-	repository.MAccountRepository.On("RetrieveBalanceAtBlock").Return(exampleAmount, repository.NilError)
-
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	accountService := NewAccountAPIService(commons, repository.MAccountRepository)
+	repository.MBlockRepository.On("RetrieveLatest").Return(block(), repository.NilError)
+	repository.MAccountRepository.On("RetrieveBalanceAtBlock").Return(amount(), repository.NilError)
 
 	// when:
-	actualResult, e := accountService.AccountBalance(nil, exampleRequest(false))
+	actualResult, e := getSubject().AccountBalance(nil, request(false))
 
 	// then:
-	assert.Equal(t, expectedAccountBalanceResponse, actualResult)
+	assert.Equal(t, expectedAccountBalanceResponse(), actualResult)
 	assert.Nil(t, e)
+	repository.MBlockRepository.AssertNotCalled(t, "FindByIdentifier")
+	repository.MBlockRepository.AssertNotCalled(t, "FindByHash")
 }
 
-func TestAccountBalanceFullData(t *testing.T) {
+func TestAccountBalanceWithBlockIdentifier(t *testing.T) {
 	// given:
-	expectedAccountBalanceResponse := &rTypes.AccountBalanceResponse{
-		BlockIdentifier: &rTypes.BlockIdentifier{
-			Index: 1,
-			Hash:  "0x123jsjs",
-		},
-		Balances: []*rTypes.Amount{
-			{
-				Value:    "1000",
-				Currency: config.CurrencyHbar,
-			},
-		},
-	}
-
 	repository.Setup()
-	repository.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, repository.NilError)
-	repository.MAccountRepository.On("RetrieveBalanceAtBlock").Return(exampleAmount, repository.NilError)
-
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	accountService := NewAccountAPIService(commons, repository.MAccountRepository)
+	repository.MBlockRepository.On("FindByIdentifier").Return(block(), repository.NilError)
+	repository.MAccountRepository.On("RetrieveBalanceAtBlock").Return(amount(), repository.NilError)
 
 	// when:
-	actualResult, e := accountService.AccountBalance(nil, exampleRequest(true))
+	actualResult, e := getSubject().AccountBalance(nil, request(true))
 
 	//then:
-	assert.Equal(t, expectedAccountBalanceResponse, actualResult)
+	assert.Equal(t, expectedAccountBalanceResponse(), actualResult)
 	assert.Nil(t, e)
 	repository.MBlockRepository.AssertNotCalled(t, "RetrieveLatest")
 }
 
-func TestAccountBalanceThrows(t *testing.T) {
+func TestAccountBalanceThrowsWhenRetrieveLatestFails(t *testing.T) {
 	// given:
 	repository.Setup()
 	repository.MBlockRepository.On("RetrieveLatest").Return(repository.NilBlock, &rTypes.Error{})
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	accountService := NewAccountAPIService(commons, repository.MAccountRepository)
-
 	// when:
-	actualResult, e := accountService.AccountBalance(nil, exampleRequest(false))
+	actualResult, e := getSubject().AccountBalance(nil, request(false))
 
 	// then:
 	assert.Nil(t, actualResult)
 	assert.NotNil(t, e)
+	assert.IsType(t, &rTypes.Error{}, e)
+	repository.MAccountRepository.AssertNotCalled(t, "RetrieveBalanceAtBlock")
+}
+
+func TestAccountBalanceThrowsWhenRetrieveBlockFails(t *testing.T) {
+	// given:
+	repository.Setup()
+	repository.MBlockRepository.On("RetrieveLatest").Return(block(), repository.NilError)
+	repository.MBlockRepository.On("FindByIdentifier").Return(repository.NilBlock, &rTypes.Error{})
+
+	// when:
+	actualResult, e := getSubject().AccountBalance(nil, request(true))
+
+	// then:
+	assert.Nil(t, actualResult)
+	assert.NotNil(t, e)
+	assert.IsType(t, &rTypes.Error{}, e)
+	repository.MAccountRepository.AssertNotCalled(t, "RetrieveBalanceAtBlock")
+	repository.MBlockRepository.AssertNotCalled(t, "RetrieveLatest")
 }
 
 func TestAccountBalanceThrowsWhenRetrieveBalanceAtBlockFails(t *testing.T) {
 	// given:
 	repository.Setup()
-	repository.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, repository.NilError)
+	repository.MBlockRepository.On("FindByIdentifier").Return(block(), repository.NilError)
 	repository.MAccountRepository.On("RetrieveBalanceAtBlock").Return(repository.NilAmount, &rTypes.Error{})
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	accountService := NewAccountAPIService(commons, repository.MAccountRepository)
-
 	// when:
-	actualResult, e := accountService.AccountBalance(nil, exampleRequest(true))
+	actualResult, e := getSubject().AccountBalance(nil, request(true))
 
 	//then:
 	assert.Nil(t, actualResult)
 	assert.NotNil(t, e)
+	assert.IsType(t, &rTypes.Error{}, e)
 }

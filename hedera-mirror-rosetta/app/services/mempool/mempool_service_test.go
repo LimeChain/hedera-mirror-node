@@ -57,6 +57,5 @@ func TestMempoolTransaction(t *testing.T) {
 
 	// then:
 	assert.Equal(t, errors.Errors[errors.TransactionNotFound], e)
-
 	assert.Nil(t, res)
 }

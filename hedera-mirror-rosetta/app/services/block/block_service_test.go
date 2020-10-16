@@ -21,6 +21,7 @@
 package block
 
 import (
+	"github.com/coinbase/rosetta-sdk-go/server"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/services/base"
@@ -28,6 +29,22 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
+
+func getSubject() server.BlockAPIServicer {
+	baseService := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
+	return NewBlockAPIService(baseService)
+}
+
+func block() *types.Block {
+	return &types.Block{
+		Index:               1,
+		Hash:                "123jsjs",
+		ConsensusStartNanos: 1000000,
+		ConsensusEndNanos:   20000000,
+		ParentIndex:         2,
+		ParentHash:          "parenthash",
+	}
+}
 
 func exampleBlockRequest() *rTypes.BlockRequest {
 	index := int64(100)
@@ -76,6 +93,31 @@ func exampleBlockResponse() *rTypes.BlockResponse {
 	}
 }
 
+func dummyTransaction(hash string) *types.Transaction {
+	return &types.Transaction{
+		Hash:       hash,
+		Operations: nil,
+	}
+}
+
+func transactionRequest() *rTypes.BlockTransactionRequest {
+	return &rTypes.BlockTransactionRequest{
+		NetworkIdentifier: &rTypes.NetworkIdentifier{
+			Blockchain: "someblockchain",
+			Network:    "somenetwork",
+			SubNetworkIdentifier: &rTypes.SubNetworkIdentifier{
+				Network:  "somesubnetwork",
+				Metadata: nil,
+			},
+		},
+		BlockIdentifier: &rTypes.BlockIdentifier{
+			Index: 1,
+			Hash:  "someblockhash",
+		},
+		TransactionIdentifier: &rTypes.TransactionIdentifier{Hash: "somehash"},
+	}
+}
+
 func TestNewBlockAPIService(t *testing.T) {
 	repository.Setup()
 	baseService := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
@@ -86,35 +128,17 @@ func TestNewBlockAPIService(t *testing.T) {
 
 func TestBlock(t *testing.T) {
 	// given:
-	exampleBlock := &types.Block{
-		Index:               1,
-		Hash:                "0x123jsjs",
-		ConsensusStartNanos: 1000000,
-		ConsensusEndNanos:   20000000,
-		ParentIndex:         2,
-		ParentHash:          "0xparenthash",
-	}
-
 	exampleTransactions := []*types.Transaction{
-		{
-			Hash:       "123",
-			Operations: nil,
-		},
-		{
-			Hash:       "246",
-			Operations: nil,
-		},
+		dummyTransaction("123"),
+		dummyTransaction("246"),
 	}
 
 	repository.Setup()
-	repository.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, repository.NilError)
+	repository.MBlockRepository.On("FindByIdentifier").Return(block(), repository.NilError)
 	repository.MTransactionRepository.On("FindBetween").Return(exampleTransactions, repository.NilError)
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	blockService := NewBlockAPIService(commons)
-
 	// when:
-	res, e := blockService.Block(nil, exampleBlockRequest())
+	res, e := getSubject().Block(nil, exampleBlockRequest())
 
 	// then:
 	assert.Nil(t, e)
@@ -129,77 +153,36 @@ func TestBlockThrowsWhenFindByIdentifierFails(t *testing.T) {
 		&rTypes.Error{},
 	)
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	blockService := NewBlockAPIService(commons)
-
 	// when:
-	res, e := blockService.Block(nil, exampleBlockRequest())
+	res, e := getSubject().Block(nil, exampleBlockRequest())
 
 	// then:
 	assert.NotNil(t, e)
+	assert.IsType(t, &rTypes.Error{}, e)
 	assert.Nil(t, res)
 }
 
 func TestBlockThrowsWhenFindBetweenFails(t *testing.T) {
 	// given:
-	exampleBlock := &types.Block{
-		Index:               1,
-		Hash:                "0x123jsjs",
-		ConsensusStartNanos: 1000000,
-		ConsensusEndNanos:   20000000,
-		ParentIndex:         2,
-		ParentHash:          "0xparenthash",
-	}
-
 	repository.Setup()
-	repository.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, repository.NilError)
+	repository.MBlockRepository.On("FindByIdentifier").Return(block(), repository.NilError)
 	repository.MTransactionRepository.On("FindBetween").Return(
 		[]*types.Transaction{},
 		&rTypes.Error{},
 	)
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	blockService := NewBlockAPIService(commons)
-
 	// when:
-	res, e := blockService.Block(nil, exampleBlockRequest())
+	res, e := getSubject().Block(nil, exampleBlockRequest())
 
 	// then:
 	assert.NotNil(t, e)
+	assert.IsType(t, &rTypes.Error{}, e)
 	assert.Nil(t, res)
 }
 
 func TestBlockTransaction(t *testing.T) {
 	// given:
-	exampleBlock := &types.Block{
-		Index:               1,
-		Hash:                "0x123jsjs",
-		ConsensusStartNanos: 1000000,
-		ConsensusEndNanos:   20000000,
-		ParentIndex:         2,
-		ParentHash:          "0xparenthash",
-	}
-
-	exampleTransaction := &types.Transaction{
-		Hash:       "somehash",
-		Operations: nil,
-	}
-
-	exampleTransactionRequest := &rTypes.BlockTransactionRequest{
-		NetworkIdentifier: &rTypes.NetworkIdentifier{
-			Blockchain: "someblockchain",
-			Network:    "somenetwork",
-			SubNetworkIdentifier: &rTypes.SubNetworkIdentifier{
-				Network:  "somesubnetwork",
-				Metadata: nil,
-			},
-		},
-		BlockIdentifier: &rTypes.BlockIdentifier{
-			Index: 1,
-			Hash:  "someblockhash",
-		},
-		TransactionIdentifier: &rTypes.TransactionIdentifier{Hash: "somehash"},
-	}
+	exampleTransaction := dummyTransaction("somehash")
 
 	expectedResult := &rTypes.BlockTransactionResponse{Transaction: &rTypes.Transaction{
 		TransactionIdentifier: &rTypes.TransactionIdentifier{Hash: "somehash"},
@@ -208,90 +191,43 @@ func TestBlockTransaction(t *testing.T) {
 	}}
 
 	repository.Setup()
-	repository.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, repository.NilError)
+	repository.MBlockRepository.On("FindByIdentifier").Return(block(), repository.NilError)
 	repository.MTransactionRepository.On("FindByHashInBlock").Return(exampleTransaction, repository.NilError)
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	blockService := NewBlockAPIService(commons)
-
 	// when:
-	res, e := blockService.BlockTransaction(nil, exampleTransactionRequest)
+	res, e := getSubject().BlockTransaction(nil, transactionRequest())
 
 	// then:
 	assert.Equal(t, expectedResult, res)
 	assert.Nil(t, e)
+	assert.IsType(t, &rTypes.Error{}, e)
 }
 
 func TestBlockTransactionThrowsWhenFindByIdentifierFails(t *testing.T) {
 	// given:
-	exampleTransactionRequest := &rTypes.BlockTransactionRequest{
-		NetworkIdentifier: &rTypes.NetworkIdentifier{
-			Blockchain: "someblockchain",
-			Network:    "somenetwork",
-			SubNetworkIdentifier: &rTypes.SubNetworkIdentifier{
-				Network:  "somesubnetwork",
-				Metadata: nil,
-			},
-		},
-		BlockIdentifier: &rTypes.BlockIdentifier{
-			Index: 1,
-			Hash:  "someblockhash",
-		},
-		TransactionIdentifier: &rTypes.TransactionIdentifier{Hash: "somehash"},
-	}
-
 	repository.Setup()
 	repository.MBlockRepository.On("FindByIdentifier").Return(repository.NilBlock, &rTypes.Error{})
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	blockService := NewBlockAPIService(commons)
-
 	// when:
-	res, e := blockService.BlockTransaction(nil, exampleTransactionRequest)
+	res, e := getSubject().BlockTransaction(nil, transactionRequest())
 
 	// then:
 	assert.Nil(t, res)
 	assert.NotNil(t, e)
+	assert.IsType(t, &rTypes.Error{}, e)
 }
 
 func TestBlockTransactionThrowsWhenFindByHashInBlockFails(t *testing.T) {
 	// given:
-	exampleBlock := &types.Block{
-		Index:               1,
-		Hash:                "0x123jsjs",
-		ConsensusStartNanos: 1000000,
-		ConsensusEndNanos:   20000000,
-		ParentIndex:         2,
-		ParentHash:          "0xparenthash",
-	}
-
-	exampleTransactionRequest := &rTypes.BlockTransactionRequest{
-		NetworkIdentifier: &rTypes.NetworkIdentifier{
-			Blockchain: "someblockchain",
-			Network:    "somenetwork",
-			SubNetworkIdentifier: &rTypes.SubNetworkIdentifier{
-				Network:  "somesubnetwork",
-				Metadata: nil,
-			},
-		},
-		BlockIdentifier: &rTypes.BlockIdentifier{
-			Index: 1,
-			Hash:  "someblockhash",
-		},
-		TransactionIdentifier: &rTypes.TransactionIdentifier{Hash: "somehash"},
-	}
-
 	repository.Setup()
-	repository.MBlockRepository.On("FindByIdentifier").Return(exampleBlock, repository.NilError)
+	repository.MBlockRepository.On("FindByIdentifier").Return(block(), repository.NilError)
 	repository.MTransactionRepository.On("FindByHashInBlock").Return(repository.NilTransaction, &rTypes.Error{})
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	blockService := NewBlockAPIService(commons)
-
 	// when:
-	res, e := blockService.BlockTransaction(nil, exampleTransactionRequest)
+	res, e := getSubject().BlockTransaction(nil, transactionRequest())
 
 	// then:
 	assert.Nil(t, res)
 	assert.NotNil(t, e)
+	assert.IsType(t, &rTypes.Error{}, e)
 }

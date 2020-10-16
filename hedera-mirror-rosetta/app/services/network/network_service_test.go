@@ -32,12 +32,31 @@ import (
 	"testing"
 )
 
-func TestNewNetworkAPIService(t *testing.T) {
-	repository.Setup()
+func getSubject() server.NetworkAPIServicer {
 	baseService := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	networkService := networkAPIService(baseService)
+	return networkAPIService(baseService)
+}
 
-	assert.IsType(t, &NetworkAPIService{}, networkService)
+func dummyGenesisBlock() *types.Block {
+	return &types.Block{
+		Index:               1,
+		Hash:                "0x123jsjs",
+		ConsensusStartNanos: 1000000,
+		ConsensusEndNanos:   20000000,
+		ParentIndex:         0,
+		ParentHash:          "",
+	}
+}
+
+func dummyLatestBlock() *types.Block {
+	return &types.Block{
+		Index:               2,
+		Hash:                "0x1323jsjs",
+		ConsensusStartNanos: 40000000,
+		ConsensusEndNanos:   70000000,
+		ParentIndex:         1,
+		ParentHash:          "0x123jsjs",
+	}
 }
 
 func networkAPIService(base base.BaseService) server.NetworkAPIServicer {
@@ -61,6 +80,14 @@ func networkAPIService(base base.BaseService) server.NetworkAPIServicer {
 	)
 }
 
+func TestNewNetworkAPIService(t *testing.T) {
+	repository.Setup()
+	baseService := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
+	networkService := networkAPIService(baseService)
+
+	assert.IsType(t, &NetworkAPIService{}, networkService)
+}
+
 func TestNetworkList(t *testing.T) {
 	// given:
 	expectedResult := &rTypes.NetworkListResponse{
@@ -78,11 +105,8 @@ func TestNetworkList(t *testing.T) {
 
 	repository.Setup()
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	networkService := networkAPIService(commons)
-
 	// when:
-	res, e := networkService.NetworkList(nil, nil)
+	res, e := getSubject().NetworkList(nil, nil)
 
 	// then:
 	assert.Equal(t, expectedResult, res)
@@ -115,11 +139,8 @@ func TestNetworkOptions(t *testing.T) {
 	repository.MTransactionRepository.On("Statuses").Return(map[int]string{1: "Pending"}, repository.NilError)
 	repository.MTransactionRepository.On("TypesAsArray").Return([]string{"Transfer"}, repository.NilError)
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	networkService := networkAPIService(commons)
-
 	// when:
-	res, e := networkService.NetworkOptions(nil, nil)
+	res, e := getSubject().NetworkOptions(nil, nil)
 
 	// then:
 	assert.Equal(t, expectedResult.Version, res.Version)
@@ -132,24 +153,6 @@ func TestNetworkOptions(t *testing.T) {
 
 func TestNetworkStatus(t *testing.T) {
 	// given:
-	exampleGenesisBlock := &types.Block{
-		Index:               1,
-		Hash:                "0x123jsjs",
-		ConsensusStartNanos: 1000000,
-		ConsensusEndNanos:   20000000,
-		ParentIndex:         0,
-		ParentHash:          "",
-	}
-
-	exampleLatestBlock := &types.Block{
-		Index:               2,
-		Hash:                "0x1323jsjs",
-		ConsensusStartNanos: 40000000,
-		ConsensusEndNanos:   70000000,
-		ParentIndex:         1,
-		ParentHash:          "0x123jsjs",
-	}
-
 	exampleEntries := &types.AddressBookEntries{Entries: []*types.AddressBookEntry{}}
 
 	expectedResult := &rTypes.NetworkStatusResponse{
@@ -166,15 +169,12 @@ func TestNetworkStatus(t *testing.T) {
 	}
 
 	repository.Setup()
-	repository.MBlockRepository.On("RetrieveGenesis").Return(exampleGenesisBlock, repository.NilError)
-	repository.MBlockRepository.On("RetrieveLatest").Return(exampleLatestBlock, repository.NilError)
+	repository.MBlockRepository.On("RetrieveGenesis").Return(dummyGenesisBlock(), repository.NilError)
+	repository.MBlockRepository.On("RetrieveLatest").Return(dummyLatestBlock(), repository.NilError)
 	repository.MAddressBookEntryRepository.On("Entries").Return(exampleEntries, repository.NilError)
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	networkService := networkAPIService(commons)
-
 	// when:
-	res, e := networkService.NetworkStatus(nil, nil)
+	res, e := getSubject().NetworkStatus(nil, nil)
 
 	// then:
 	assert.Equal(t, expectedResult, res)
@@ -186,75 +186,42 @@ func TestNetworkStatusThrowsWhenRetrieveGenesisFails(t *testing.T) {
 	repository.Setup()
 	repository.MBlockRepository.On("RetrieveGenesis").Return(repository.NilBlock, &rTypes.Error{})
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	networkService := networkAPIService(commons)
-
 	// when:
-	res, e := networkService.NetworkStatus(nil, nil)
+	res, e := getSubject().NetworkStatus(nil, nil)
 
 	// then
 	assert.Nil(t, res)
 	assert.NotNil(t, e)
+	assert.IsType(t, &rTypes.Error{}, e)
 }
 
 func TestNetworkStatusThrowsWhenRetrieveLatestFails(t *testing.T) {
 	// given:
-	exampleGenesisBlock := &types.Block{
-		Index:               1,
-		Hash:                "0x123jsjs",
-		ConsensusStartNanos: 1000000,
-		ConsensusEndNanos:   20000000,
-		ParentIndex:         0,
-		ParentHash:          "",
-	}
-
 	repository.Setup()
-	repository.MBlockRepository.On("RetrieveGenesis").Return(exampleGenesisBlock, repository.NilError)
+	repository.MBlockRepository.On("RetrieveGenesis").Return(dummyGenesisBlock(), repository.NilError)
 	repository.MBlockRepository.On("RetrieveLatest").Return(repository.NilBlock, &rTypes.Error{})
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	networkService := networkAPIService(commons)
-
 	// when:
-	res, e := networkService.NetworkStatus(nil, nil)
+	res, e := getSubject().NetworkStatus(nil, nil)
 
 	// then:
 	assert.Nil(t, res)
 	assert.NotNil(t, e)
+	assert.IsType(t, &rTypes.Error{}, e)
 }
 
 func TestNetworkStatusThrowsWhenEntriesFail(t *testing.T) {
 	// given:
-	exampleGenesisBlock := &types.Block{
-		Index:               1,
-		Hash:                "0x123jsjs",
-		ConsensusStartNanos: 1000000,
-		ConsensusEndNanos:   20000000,
-		ParentIndex:         0,
-		ParentHash:          "",
-	}
-
-	exampleLatestBlock := &types.Block{
-		Index:               2,
-		Hash:                "0x1323jsjs",
-		ConsensusStartNanos: 40000000,
-		ConsensusEndNanos:   70000000,
-		ParentIndex:         1,
-		ParentHash:          "0x123jsjs",
-	}
-
 	repository.Setup()
-	repository.MBlockRepository.On("RetrieveGenesis").Return(exampleGenesisBlock, repository.NilError)
-	repository.MBlockRepository.On("RetrieveLatest").Return(exampleLatestBlock, repository.NilError)
+	repository.MBlockRepository.On("RetrieveGenesis").Return(dummyGenesisBlock(), repository.NilError)
+	repository.MBlockRepository.On("RetrieveLatest").Return(dummyLatestBlock(), repository.NilError)
 	repository.MAddressBookEntryRepository.On("Entries").Return(repository.NilEntries, &rTypes.Error{})
 
-	commons := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	networkService := networkAPIService(commons)
-
 	// when:
-	res, e := networkService.NetworkStatus(nil, nil)
+	res, e := getSubject().NetworkStatus(nil, nil)
 
 	// then:
 	assert.Nil(t, res)
 	assert.NotNil(t, e)
+	assert.IsType(t, &rTypes.Error{}, e)
 }
