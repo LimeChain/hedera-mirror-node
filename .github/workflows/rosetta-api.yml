@@ -44,6 +44,6 @@ jobs:
       - uses: actions/download-artifact@master
         with:
           name: ${{ env.code-cov-report }}
-          path: ./coverage.txt
+          path: coverage.txt
       - run: ls -la && bash <(curl -s https://codecov.io/bash)
 
