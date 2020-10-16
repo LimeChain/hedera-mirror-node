@@ -3,9 +3,10 @@ name: Rosetta API
 on:
   - push
 
+env:
+    WORKSPACE: ./hedera-mirror-rosetta
+
 jobs:
-  env:
-      WORKSPACE: ./hedera-mirror-rosetta
   build-rosetta:
     runs-on: ubuntu-latest
     steps:
