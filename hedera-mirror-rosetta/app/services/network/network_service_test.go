@@ -82,10 +82,7 @@ func networkAPIService(base base.BaseService) server.NetworkAPIServicer {
 
 func TestNewNetworkAPIService(t *testing.T) {
 	repository.Setup()
-	baseService := base.NewBaseService(repository.MBlockRepository, repository.MTransactionRepository)
-	networkService := networkAPIService(baseService)
-
-	assert.IsType(t, &NetworkAPIService{}, networkService)
+	assert.IsType(t, &NetworkAPIService{}, getSubject())
 }
 
 func TestNetworkList(t *testing.T) {
@@ -151,6 +148,32 @@ func TestNetworkOptions(t *testing.T) {
 	assert.Nil(t, e)
 }
 
+func TestNetworkOptionsThrowsWhenStatusesFails(t *testing.T) {
+	var nilStatuses map[int]string = nil
+	repository.Setup()
+	repository.MTransactionRepository.On("TypesAsArray").Return([]string{"Transfer"}, repository.NilError)
+	repository.MTransactionRepository.On("Statuses").Return(nilStatuses, &rTypes.Error{})
+
+	// when:
+	res, e := getSubject().NetworkOptions(nil, nil)
+
+	assert.Nil(t, res)
+	assert.IsType(t, &rTypes.Error{}, e)
+}
+
+func TestNetworkOptionsThrowsWhenTypesAsArrayFails(t *testing.T) {
+	var NilTypesAsArray []string = nil
+	repository.Setup()
+	repository.MTransactionRepository.On("TypesAsArray").Return(NilTypesAsArray, &rTypes.Error{})
+
+	// when:
+	res, e := getSubject().NetworkOptions(nil, nil)
+
+	assert.Nil(t, res)
+	assert.IsType(t, &rTypes.Error{}, e)
+	repository.MTransactionRepository.AssertNotCalled(t, "Statuses")
+}
+
 func TestNetworkStatus(t *testing.T) {
 	// given:
 	exampleEntries := &types.AddressBookEntries{Entries: []*types.AddressBookEntry{}}
@@ -191,7 +214,6 @@ func TestNetworkStatusThrowsWhenRetrieveGenesisFails(t *testing.T) {
 
 	// then
 	assert.Nil(t, res)
-	assert.NotNil(t, e)
 	assert.IsType(t, &rTypes.Error{}, e)
 }
 
@@ -206,7 +228,6 @@ func TestNetworkStatusThrowsWhenRetrieveLatestFails(t *testing.T) {
 
 	// then:
 	assert.Nil(t, res)
-	assert.NotNil(t, e)
 	assert.IsType(t, &rTypes.Error{}, e)
 }
 
@@ -222,6 +243,5 @@ func TestNetworkStatusThrowsWhenEntriesFail(t *testing.T) {
 
 	// then:
 	assert.Nil(t, res)
-	assert.NotNil(t, e)
 	assert.IsType(t, &rTypes.Error{}, e)
 }

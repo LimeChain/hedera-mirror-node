@@ -157,9 +157,8 @@ func TestBlockThrowsWhenFindByIdentifierFails(t *testing.T) {
 	res, e := getSubject().Block(nil, exampleBlockRequest())
 
 	// then:
-	assert.NotNil(t, e)
-	assert.IsType(t, &rTypes.Error{}, e)
 	assert.Nil(t, res)
+	assert.IsType(t, &rTypes.Error{}, e)
 }
 
 func TestBlockThrowsWhenFindBetweenFails(t *testing.T) {
@@ -175,9 +174,8 @@ func TestBlockThrowsWhenFindBetweenFails(t *testing.T) {
 	res, e := getSubject().Block(nil, exampleBlockRequest())
 
 	// then:
-	assert.NotNil(t, e)
-	assert.IsType(t, &rTypes.Error{}, e)
 	assert.Nil(t, res)
+	assert.IsType(t, &rTypes.Error{}, e)
 }
 
 func TestBlockTransaction(t *testing.T) {
@@ -199,7 +197,6 @@ func TestBlockTransaction(t *testing.T) {
 
 	// then:
 	assert.Equal(t, expectedResult, res)
-	assert.Nil(t, e)
 	assert.IsType(t, &rTypes.Error{}, e)
 }
 
@@ -213,7 +210,6 @@ func TestBlockTransactionThrowsWhenFindByIdentifierFails(t *testing.T) {
 
 	// then:
 	assert.Nil(t, res)
-	assert.NotNil(t, e)
 	assert.IsType(t, &rTypes.Error{}, e)
 }
 
@@ -228,6 +224,5 @@ func TestBlockTransactionThrowsWhenFindByHashInBlockFails(t *testing.T) {
 
 	// then:
 	assert.Nil(t, res)
-	assert.NotNil(t, e)
 	assert.IsType(t, &rTypes.Error{}, e)
 }

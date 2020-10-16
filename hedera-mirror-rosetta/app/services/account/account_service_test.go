@@ -134,7 +134,6 @@ func TestAccountBalanceThrowsWhenRetrieveLatestFails(t *testing.T) {
 
 	// then:
 	assert.Nil(t, actualResult)
-	assert.NotNil(t, e)
 	assert.IsType(t, &rTypes.Error{}, e)
 	repository.MAccountRepository.AssertNotCalled(t, "RetrieveBalanceAtBlock")
 }
@@ -142,7 +141,6 @@ func TestAccountBalanceThrowsWhenRetrieveLatestFails(t *testing.T) {
 func TestAccountBalanceThrowsWhenRetrieveBlockFails(t *testing.T) {
 	// given:
 	repository.Setup()
-	repository.MBlockRepository.On("RetrieveLatest").Return(block(), repository.NilError)
 	repository.MBlockRepository.On("FindByIdentifier").Return(repository.NilBlock, &rTypes.Error{})
 
 	// when:
@@ -150,7 +148,6 @@ func TestAccountBalanceThrowsWhenRetrieveBlockFails(t *testing.T) {
 
 	// then:
 	assert.Nil(t, actualResult)
-	assert.NotNil(t, e)
 	assert.IsType(t, &rTypes.Error{}, e)
 	repository.MAccountRepository.AssertNotCalled(t, "RetrieveBalanceAtBlock")
 	repository.MBlockRepository.AssertNotCalled(t, "RetrieveLatest")
@@ -167,6 +164,5 @@ func TestAccountBalanceThrowsWhenRetrieveBalanceAtBlockFails(t *testing.T) {
 
 	//then:
 	assert.Nil(t, actualResult)
-	assert.NotNil(t, e)
 	assert.IsType(t, &rTypes.Error{}, e)
 }
