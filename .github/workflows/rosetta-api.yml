@@ -5,7 +5,7 @@ on:
 
 env:
     working-directory: ./hedera-mirror-rosetta
-    code-cov-report: rosetta-code-cov-report.txt
+    code-cov-report: rosetta-code-cov-report
 
 jobs:
   build:
@@ -44,6 +44,6 @@ jobs:
       - uses: actions/download-artifact@master
         with:
           name: ${{ env.code-cov-report }}
-          path: ./${{ env.code-cov-report }}
+          path: ./coverage.txt
       - run: bash <(curl -s https://codecov.io/bash)
 
