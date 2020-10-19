@@ -38,13 +38,15 @@ import (
 
 const (
 	tableNameTransaction        = "transaction"
-	tableNameTransactionTypes   = "t_transaction_types"
 	tableNameTransactionResults = "t_transaction_results"
+	tableNameTransactionTypes   = "t_transaction_types"
 )
 
 const (
 	whereClauseBetweenConsensus         string = "consensus_ns >= ? AND consensus_ns <= ?"
 	whereTimestampsInConsensusTimestamp string = "consensus_timestamp IN (?)"
+	selectTransactionResults            string = "SELECT * FROM t_transaction_results"
+	selectTransactionTypes              string = "SELECT * FROM t_transaction_types"
 )
 
 type transaction struct {
@@ -189,13 +191,13 @@ func (tr *TransactionRepository) findCryptoTransfers(timestamps []int64) []dbTyp
 
 func (tr *TransactionRepository) retrieveTransactionTypes() []transactionType {
 	var transactionTypes []transactionType
-	tr.dbClient.Find(&transactionTypes)
+	tr.dbClient.Raw(selectTransactionTypes).Find(&transactionTypes)
 	return transactionTypes
 }
 
 func (tr *TransactionRepository) retrieveTransactionResults() []transactionResult {
 	var tResults []transactionResult
-	tr.dbClient.Find(&tResults)
+	tr.dbClient.Raw(selectTransactionResults).Find(&tResults)
 	return tResults
 }
 
