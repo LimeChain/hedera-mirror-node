@@ -37,15 +37,15 @@ jobs:
   cli-validation:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Build Mirror Node
-      run: docker build --tag=${{env.image-tag}} .
-      working-directory: ${{env.working-directory}}/build
-    - name: Run Mirror Node
-      run: docker run -d ${{env.image-tag}} -p 5700:5700
-    - name: Wait for Mirror Node to start (60s)
-      run: sleep 60
-    - name: Run CLI Validation
-      run: bash ./validation/run-validation.sh
-      working-directory: ${{env.working-directory}}
+      - uses: actions/checkout@v2
+      - name: Build Mirror Node
+        run: docker build --tag=${{env.image-tag}} .
+        working-directory: ${{env.working-directory}}/build
+      - name: Run Mirror Node
+        run: docker run -d ${{env.image-tag}} -p 5700:5700
+      - name: Wait for Mirror Node to start (60s)
+        run: sleep 60
+      - name: Run CLI Validation
+        run: bash ./validation/run-validation.sh
+        working-directory: ${{env.working-directory}}
     
