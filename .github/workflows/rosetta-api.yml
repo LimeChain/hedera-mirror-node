@@ -1,7 +1,6 @@
 name: Rosetta API
 
-on:
-  - push
+on: [push, pull_request]
 
 env:
     working-directory: ./hedera-mirror-rosetta
