@@ -1,4 +1,4 @@
-# We upload two separate reports: js and java
+# We upload three separate reports: js, java and go
 codecov:
     notify:
         after_n_builds: 3
