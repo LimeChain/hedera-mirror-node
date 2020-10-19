@@ -41,7 +41,7 @@ jobs:
         run: bash <(curl -s https://codecov.io/bash)
         working-directory: ${{env.working-directory}} 
   cli-validation:
-    # if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
