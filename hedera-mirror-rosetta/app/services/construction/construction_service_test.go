@@ -138,10 +138,10 @@ func dummyConstructionHashRequest(txHash string) *types.ConstructionHashRequest 
 	}
 }
 
-func dummyConstructionParseRequest(txHash string) *types.ConstructionParseRequest {
+func dummyConstructionParseRequest(txHash string, signed bool) *types.ConstructionParseRequest {
 	return &types.ConstructionParseRequest{
 		NetworkIdentifier: networkIdentifier(),
-		Signed:            false,
+		Signed:            signed,
 		Transaction:       txHash,
 	}
 }
@@ -279,7 +279,7 @@ func TestConstructionMetadata(t *testing.T) {
 
 func TestConstructionParse(t *testing.T) {
 	// given:
-	exampleConstructionParseRequest := dummyConstructionParseRequest(validTxHash)
+	exampleConstructionParseRequest := dummyConstructionParseRequest(validTxHash, false)
 	expectedConstructionParseResponse := &types.ConstructionParseResponse{
 		Operations: []*types.Operation{
 			dummyOperation(0, "CRYPTOTRANSFER", "0.0.123352", "-1000"),
@@ -295,9 +295,32 @@ func TestConstructionParse(t *testing.T) {
 	assert.Nil(t, e)
 }
 
+func TestConstructionParseSigned(t *testing.T) {
+	// given:
+	exampleConstructionParseRequest := dummyConstructionParseRequest(validTxHash, true)
+	expectedConstructionParseResponse := &types.ConstructionParseResponse{
+		Operations: []*types.Operation{
+			dummyOperation(0, "CRYPTOTRANSFER", "0.0.123352", "-1000"),
+			dummyOperation(1, "CRYPTOTRANSFER", "0.0.123518", "1000"),
+		},
+		AccountIdentifierSigners: []*types.AccountIdentifier{
+			{
+				Address: "d25025bad248dbd4c6ca704eefba7ab4f3e3f48089fa5f20e4e1d10303f97ade",
+			},
+		},
+	}
+
+	// when:
+	res, e := NewConstructionAPIService().ConstructionParse(nil, exampleConstructionParseRequest)
+
+	// then:
+	assert.Equal(t, expectedConstructionParseResponse, res)
+	assert.Nil(t, e)
+}
+
 func TestConstructionParseThrowsWhenDecodeStringFails(t *testing.T) {
 	// when:
-	res, e := NewConstructionAPIService().ConstructionParse(nil, dummyConstructionParseRequest(invalidTxHash))
+	res, e := NewConstructionAPIService().ConstructionParse(nil, dummyConstructionParseRequest(invalidTxHash, false))
 
 	// then:
 	assert.Nil(t, res)
