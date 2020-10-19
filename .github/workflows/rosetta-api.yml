@@ -33,8 +33,3 @@ jobs:
         working-directory: ${{env.working-directory}}
       - run: bash <(curl -s https://codecov.io/bash)
         working-directory: ${{env.working-directory}}
-      - uses: actions/upload-artifact@master
-        with:
-            name: ${{ env.code-cov-report }}
-            path: ${{ env.working-directory }}/coverage.txt
-            if-no-files-found: error
