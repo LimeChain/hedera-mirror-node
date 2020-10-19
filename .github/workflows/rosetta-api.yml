@@ -5,7 +5,6 @@ on:
 
 env:
     working-directory: ./hedera-mirror-rosetta
-    code-cov-report: rosetta-code-cov-report
     image-tag: mirror-node
 
 jobs:
