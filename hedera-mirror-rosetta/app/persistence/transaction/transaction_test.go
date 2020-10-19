@@ -23,20 +23,51 @@ package transaction
 import (
 	"encoding/hex"
 	"github.com/DATA-DOG/go-sqlmock"
+	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	entityid "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/services/encoding"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistence/common"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"regexp"
+	"strconv"
 	"testing"
 )
 
 var (
+	firstAccount, _          = constructAccount(1)
+	secondAccount, _         = constructAccount(2)
+	amount                   = types.Amount{Value: 1}
+	transactionColumns       = mocks.GetFieldsNamesToSnakeCase(transaction{})
 	transactionTypeColumns   = mocks.GetFieldsNamesToSnakeCase(transactionType{})
 	transactionResultColumns = mocks.GetFieldsNamesToSnakeCase(transactionResult{})
-	dbTransactionTypes       = []transactionType{
+	cryptoTransferColumns    = mocks.GetFieldsNamesToSnakeCase(common.CryptoTransfer{})
+	consesusTimestamp        = int64(1)
+	dbTransactions           = []transaction{
+		{
+			ConsensusNS:    1,
+			Type:           14,
+			Result:         0,
+			PayerAccountID: 3,
+		},
+		{
+			ConsensusNS:    2,
+			Type:           12,
+			Result:         0,
+			PayerAccountID: 3,
+		},
+	}
+	mapTransactions = map[int64]transaction{
+		1: dbTransactions[0],
+		2: dbTransactions[1],
+	}
+	dbCryptoTransfers = []common.CryptoTransfer{
+		{EntityID: 1, ConsensusTimestamp: 1, Amount: 1},
+		{EntityID: 2, ConsensusTimestamp: 2, Amount: 1},
+	}
+	dbTransactionTypes = []transactionType{
 		{
 			ProtoID: 12,
 			Name:    "CRYPTODELETE",
@@ -50,6 +81,22 @@ var (
 		{ProtoID: 0, Result: "OK"},
 		{ProtoID: 1, Result: "INVALID_TRANSACTION"},
 	}
+	operations = []*types.Operation{
+		{
+			Index:   0,
+			Type:    "CRYPTOTRANSFER",
+			Status:  "OK",
+			Account: firstAccount,
+			Amount:  &amount,
+		},
+		{
+			Index:   1,
+			Type:    "CRYPTODELETE",
+			Status:  "OK",
+			Account: secondAccount,
+			Amount:  &amount,
+		},
+	}
 	tRepoTypes = map[int]string{
 		12: "CRYPTODELETE",
 		14: "CRYPTOTRANSFER",
@@ -60,6 +107,108 @@ var (
 	}
 	tRepoTypesAsArray = []string{"CRYPTODELETE", "CRYPTOTRANSFER"}
 )
+
+func TestShouldSuccessConstructionOperations(t *testing.T) {
+	// given
+	tr, mock := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	rows := willReturnRows(transactionTypeColumns, dbTransactionTypes)
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
+		WillReturnRows(rows)
+	rows = willReturnRows(transactionResultColumns, dbTransactionResults)
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionResults)).
+		WillReturnRows(rows)
+
+	// when
+	result, err := tr.constructOperations(dbCryptoTransfers, mapTransactions)
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Nil(t, err)
+
+	assert.Equal(t, operations, result)
+}
+
+func TestShouldFailConstructionOperationsInvalidCryptoTransferEntityId(t *testing.T) {
+	// given
+	tr, mock := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	rows := willReturnRows(transactionTypeColumns, dbTransactionTypes)
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
+		WillReturnRows(rows)
+	rows = willReturnRows(transactionResultColumns, dbTransactionResults)
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionResults)).
+		WillReturnRows(rows)
+
+	invalidCryptoTransfers := []common.CryptoTransfer{
+		{EntityID: -1, ConsensusTimestamp: 1, Amount: 1},
+		{EntityID: -2, ConsensusTimestamp: 2, Amount: 1},
+	}
+
+	// when
+	result, err := tr.constructOperations(invalidCryptoTransfers, mapTransactions)
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Nil(t, result)
+
+	assert.IsType(t, rTypes.Error{}, *err)
+}
+
+func TestShouldFailConstructionOperationsDueToStatusesError(t *testing.T) {
+	// given
+	tr, mock := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	rows := willReturnRows(transactionTypeColumns, dbTransactionTypes)
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
+		WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionResults)).
+		WillReturnRows(sqlmock.NewRows(transactionResultColumns))
+
+	// when
+	result, err := tr.constructOperations(dbCryptoTransfers, nil)
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Nil(t, result)
+	assert.IsType(t, rTypes.Error{}, *err)
+}
+
+func TestShouldFailConstructionOperationsDueToTypesError(t *testing.T) {
+	// given
+	tr, mock := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
+		WillReturnRows(sqlmock.NewRows(transactionTypeColumns))
+
+	// when
+	result, err := tr.constructOperations(dbCryptoTransfers, nil)
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Nil(t, result)
+	assert.IsType(t, rTypes.Error{}, *err)
+}
+
+func TestShouldSuccessFindCryptoTransfers(t *testing.T) {
+	// given
+	tr, mock := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	rows := willReturnRows(cryptoTransferColumns, dbCryptoTransfers)
+	mock.ExpectQuery(regexp.QuoteMeta(whereTimestampsInConsensusTimestamp)).
+		WithArgs(strconv.FormatInt(consesusTimestamp, 10)).
+		WillReturnRows(rows)
+
+	// when
+	res := tr.findCryptoTransfers([]int64{consesusTimestamp})
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Equal(t, dbCryptoTransfers, res)
+}
 
 func TestShouldSuccessReturnStatuses(t *testing.T) {
 	// given
@@ -77,7 +226,7 @@ func TestShouldSuccessReturnStatuses(t *testing.T) {
 	result, err := tr.Statuses()
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Nil(t, err)
 
 	assert.Equal(t, tRepoStatuses, result)
@@ -98,8 +247,8 @@ func TestShouldFailReturnStatuses(t *testing.T) {
 	result, err := tr.Statuses()
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
-	assert.NotNil(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.IsType(t, rTypes.Error{}, *err)
 
 	assert.Nil(t, result)
 }
@@ -119,8 +268,8 @@ func TestShouldFailReturnTypes(t *testing.T) {
 	result, err := tr.Types()
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
-	assert.NotNil(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.IsType(t, rTypes.Error{}, *err)
 
 	assert.Nil(t, result)
 }
@@ -140,8 +289,8 @@ func TestShouldFailReturnTypesAsArray(t *testing.T) {
 	result, err := tr.TypesAsArray()
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
-	assert.NotNil(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.IsType(t, rTypes.Error{}, *err)
 
 	assert.Nil(t, result)
 }
@@ -162,7 +311,7 @@ func TestShouldSuccessReturnTypesAsArray(t *testing.T) {
 	result, err := tr.TypesAsArray()
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Nil(t, err)
 
 	assert.Equal(t, tRepoTypesAsArray, result)
@@ -184,7 +333,7 @@ func TestShouldSuccessReturnTypes(t *testing.T) {
 	result, err := tr.Types()
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Nil(t, err)
 
 	assert.Equal(t, tRepoTypes, result)
@@ -206,7 +355,7 @@ func TestShouldSuccessSaveTransactionTypesAndStatuses(t *testing.T) {
 	result := tr.retrieveTransactionTypesAndStatuses()
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Nil(t, result)
 
 	assert.Equal(t, tRepoStatuses, tr.statuses)
@@ -228,7 +377,7 @@ func TestShouldFailReturnTransactionTypesAndStatusesDueToNoResults(t *testing.T)
 	result := tr.retrieveTransactionTypesAndStatuses()
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Equal(t, errors.Errors[errors.OperationStatusesNotFound], result)
 }
 
@@ -246,7 +395,7 @@ func TestShouldFailReturnTransactionTypesAndStatusesDueToNoTypes(t *testing.T) {
 	result := tr.retrieveTransactionTypesAndStatuses()
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Equal(t, errors.Errors[errors.OperationTypesNotFound], result)
 }
 
@@ -263,7 +412,7 @@ func TestShouldSuccessReturnTransactionResults(t *testing.T) {
 	result := tr.retrieveTransactionResults()
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Equal(t, dbTransactionResults, result)
 }
 
@@ -280,7 +429,7 @@ func TestShouldSuccessReturnTransactionTypes(t *testing.T) {
 	result := tr.retrieveTransactionTypes()
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Equal(t, dbTransactionTypes, result)
 }
 

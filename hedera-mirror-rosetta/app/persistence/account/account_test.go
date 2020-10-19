@@ -22,6 +22,7 @@ package account
 
 import (
 	"github.com/DATA-DOG/go-sqlmock"
+	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/test/mocks"
 	"github.com/jinzhu/gorm"
@@ -75,12 +76,13 @@ func TestShouldFailRetrieveBalanceAtBlockDueToInvalidAddress(t *testing.T) {
 	result, err := abr.RetrieveBalanceAtBlock(invalidAddressString, consensusTimestamp)
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Nil(t, result)
-	assert.NotNil(t, err)
+	assert.IsType(t, rTypes.Error{}, *err)
 }
 
 func TestShouldSuccessRetrieveBalanceAtBlock(t *testing.T) {
+	// given
 	abr, columns, mock := setupRepository(t)
 	defer abr.dbClient.DB().Close()
 
@@ -100,13 +102,14 @@ func TestShouldSuccessRetrieveBalanceAtBlock(t *testing.T) {
 	result, err := abr.RetrieveBalanceAtBlock(accountString, consensusTimestamp)
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mock.ExpectationsWereMet())
 
 	assert.Equal(t, expectedAmount, result)
 	assert.Nil(t, err)
 }
 
 func TestShouldSuccessRetrieveBalanceAtBlockWithNoSnapshotsBeforeThat(t *testing.T) {
+	// given
 	abr, _, mock := setupRepository(t)
 	defer abr.dbClient.DB().Close()
 
@@ -127,7 +130,7 @@ func TestShouldSuccessRetrieveBalanceAtBlockWithNoSnapshotsBeforeThat(t *testing
 	result, err := abr.RetrieveBalanceAtBlock(accountString, consensusTimestamp)
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mock.ExpectationsWereMet())
 
 	assert.Equal(t, expectedAmount, result)
 	assert.Nil(t, err)

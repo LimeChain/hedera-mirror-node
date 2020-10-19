@@ -22,6 +22,7 @@ package entry
 
 import (
 	"github.com/DATA-DOG/go-sqlmock"
+	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	entityid "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/services/encoding"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
@@ -92,7 +93,7 @@ func TestShouldSuccessReturnAddressBookEntries(t *testing.T) {
 	result, err := aber.Entries()
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mock.ExpectationsWereMet())
 
 	assert.Equal(t, expectedResult, result)
 	assert.Nil(t, err)
@@ -124,10 +125,9 @@ func TestShouldFailReturnEntriesDueToInvalidDbData(t *testing.T) {
 	result, err := aber.Entries()
 
 	// then
-	assert.Nil(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mock.ExpectationsWereMet())
 
 	assert.Nil(t, result)
-	assert.NotNil(t, err)
 	assert.Equal(t, errors.Errors[errors.InternalServerError], err)
 }
 
@@ -156,7 +156,7 @@ func TestShouldFailReturnPeerId(t *testing.T) {
 
 	// then
 	assert.Nil(t, result)
-	assert.NotNil(t, err)
+	assert.IsType(t, rTypes.Error{}, *err)
 	assert.Equal(t, errors.Errors[errors.InternalServerError], err)
 }
 

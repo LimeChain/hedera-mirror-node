@@ -44,9 +44,10 @@ const (
 
 const (
 	whereClauseBetweenConsensus         string = "consensus_ns >= ? AND consensus_ns <= ?"
-	whereTimestampsInConsensusTimestamp string = "consensus_timestamp IN (?)"
-	selectTransactionResults            string = "SELECT * FROM t_transaction_results"
-	selectTransactionTypes              string = "SELECT * FROM t_transaction_types"
+	whereTimestampsInConsensusTimestamp string = `SELECT * FROM crypto_transfer
+                                                  WHERE consensus_timestamp IN ($1)`
+	selectTransactionResults string = "SELECT * FROM t_transaction_results"
+	selectTransactionTypes   string = "SELECT * FROM t_transaction_types"
 )
 
 type transaction struct {
@@ -185,7 +186,7 @@ func (tr *TransactionRepository) FindByHashInBlock(hashStr string, consensusStar
 func (tr *TransactionRepository) findCryptoTransfers(timestamps []int64) []dbTypes.CryptoTransfer {
 	var cryptoTransfers []dbTypes.CryptoTransfer
 	timestampsStr := intsToString(timestamps)
-	tr.dbClient.Where(whereTimestampsInConsensusTimestamp, timestampsStr).Find(&cryptoTransfers)
+	tr.dbClient.Raw(whereTimestampsInConsensusTimestamp, timestampsStr).Find(&cryptoTransfers)
 	return cryptoTransfers
 }
 
