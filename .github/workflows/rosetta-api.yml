@@ -14,11 +14,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
+        name: Setup GO Env
         with:
           go-version: '1.13'
-      - run: go build -i -o rosetta cmd/*
+      - name: Build hedera-mirror-rosetta
+        run: go build -i -o rosetta cmd/*
         working-directory: ${{env.working-directory}}
-      - uses: actions/upload-artifact@master
+      - name: Upload Binary as artifact
+        uses: actions/upload-artifact@master
         with:
           name: hedera-mirror-rosetta
           path: ${{ env.working-directory }}/rosetta
@@ -28,13 +31,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
+        name: Setup GO Env
         with:
           go-version: '1.13'
-      - run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
+      - name: Run Unit Tests with Coverage
+        run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
         working-directory: ${{env.working-directory}}
-      - run: bash <(curl -s https://codecov.io/bash)
+      - name: Upload Coverage report to CodeCov
+        run: bash <(curl -s https://codecov.io/bash)
         working-directory: ${{env.working-directory}} 
   cli-validation:
+    # if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -42,7 +49,7 @@ jobs:
         run: docker build --tag=${{env.image-tag}} .
         working-directory: ${{env.working-directory}}/build
       - name: Run Mirror Node
-        run: docker run -d ${{env.image-tag}} -p 5700:5700
+        run: docker run -d -p 5700:5700 ${{env.image-tag}}
       - name: Wait for Mirror Node to start (60s)
         run: sleep 60
       - name: Run CLI Validation
