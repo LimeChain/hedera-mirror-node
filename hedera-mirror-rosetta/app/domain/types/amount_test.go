@@ -18,18 +18,31 @@
  * ‍
  */
 
-package repositories
+package types
 
 import (
-	rTypes "github.com/coinbase/rosetta-sdk-go/types"
-	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
+	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/config"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-// TransactionRepository Interface that all TransactionRepository structs must implement
-type TransactionRepository interface {
-	FindByHashInBlock(identifier string, consensusStart int64, consensusEnd int64) (*types.Transaction, *rTypes.Error)
-	FindBetween(start int64, end int64) ([]*types.Transaction, *rTypes.Error)
-	Types() (map[int]string, *rTypes.Error)
-	TypesAsArray() ([]string, *rTypes.Error)
-	Statuses() (map[int]string, *rTypes.Error)
+func expectedAmount() *types.Amount {
+	return &types.Amount{
+		Value:    "400",
+		Currency: config.CurrencyHbar,
+		Metadata: nil,
+	}
+}
+
+func exampleAmount() *Amount {
+	return &Amount{Value: int64(400)}
+}
+
+func TestToRosettaAmount(t *testing.T) {
+	// when:
+	result := exampleAmount().ToRosetta()
+
+	// then:
+	assert.Equal(t, expectedAmount(), result)
 }
