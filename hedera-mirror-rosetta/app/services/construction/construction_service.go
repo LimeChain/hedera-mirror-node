@@ -225,10 +225,7 @@ func (c *ConstructionAPIService) handleCryptoTransferPayload(operations []*rType
 			return nil, errors.Errors[errors.InvalidAccount]
 		}
 
-		amount, err := parse.ToInt64(operation.Amount.Value)
-		if err != nil {
-			return nil, errors.Errors[errors.InvalidAmount]
-		}
+		amount, _ := parse.ToInt64(operation.Amount.Value)
 
 		if amount < 0 {
 			sender = account
