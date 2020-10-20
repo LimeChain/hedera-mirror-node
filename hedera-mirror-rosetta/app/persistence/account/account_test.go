@@ -98,6 +98,54 @@ func TestShouldFailRetrieveBalanceAtBlockDueToInvalidAddressNegative(t *testing.
 	assert.Equal(t, errors.Errors[errors.InvalidAccount], err)
 }
 
+func TestShouldFailRetrieveBalanceAtBlockDueToInvalidShardComputation(t *testing.T) {
+	// given
+	abr, _, mock := setupRepository(t)
+	defer abr.dbClient.DB().Close()
+
+	invalidAddressString := "32768.0.0"
+
+	// when
+	result, err := abr.RetrieveBalanceAtBlock(invalidAddressString, consensusTimestamp)
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Nil(t, result)
+	assert.Equal(t, errors.Errors[errors.InvalidAccount], err)
+}
+
+func TestShouldFailRetrieveBalanceAtBlockDueToInvalidRealmComputation(t *testing.T) {
+	// given
+	abr, _, mock := setupRepository(t)
+	defer abr.dbClient.DB().Close()
+
+	invalidAddressString := "0.65536.0"
+
+	// when
+	result, err := abr.RetrieveBalanceAtBlock(invalidAddressString, consensusTimestamp)
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Nil(t, result)
+	assert.Equal(t, errors.Errors[errors.InvalidAccount], err)
+}
+
+func TestShouldFailRetrieveBalanceAtBlockDueToInvalidEntityComputation(t *testing.T) {
+	// given
+	abr, _, mock := setupRepository(t)
+	defer abr.dbClient.DB().Close()
+
+	invalidAddressString := "0.0.4294967296"
+
+	// when
+	result, err := abr.RetrieveBalanceAtBlock(invalidAddressString, consensusTimestamp)
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Nil(t, result)
+	assert.Equal(t, errors.Errors[errors.InvalidAccount], err)
+}
+
 func TestShouldSuccessRetrieveBalanceAtBlock(t *testing.T) {
 	// given
 	abr, columns, mock := setupRepository(t)
