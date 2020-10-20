@@ -29,6 +29,7 @@ import (
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/persistence/common"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/test/mocks"
+	hexutils "github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/tools/hex"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"regexp"
@@ -39,6 +40,8 @@ import (
 var (
 	firstAccount, _          = constructAccount(1)
 	secondAccount, _         = constructAccount(2)
+	hashString               = "1a00223d0a140a0c0891d0fef905109688f3a701120418d8c307120218061880c2d72f2202087872180a160a090a0418d8c30710cf0f0a090a0418fec40710d00f"
+	hash, _                  = hex.DecodeString(hexutils.SafeRemoveHexPrefix(hashString))
 	amount                   = types.Amount{Value: 1}
 	transactionColumns       = mocks.GetFieldsNamesToSnakeCase(transaction{})
 	transactionTypeColumns   = mocks.GetFieldsNamesToSnakeCase(transactionType{})
@@ -47,16 +50,18 @@ var (
 	consesusTimestamp        = int64(1)
 	dbTransactions           = []transaction{
 		{
-			ConsensusNS:    1,
-			Type:           14,
-			Result:         0,
-			PayerAccountID: 3,
+			ConsensusNS:     1,
+			Type:            14,
+			Result:          0,
+			PayerAccountID:  3,
+			TransactionHash: hash,
 		},
 		{
-			ConsensusNS:    2,
-			Type:           12,
-			Result:         0,
-			PayerAccountID: 3,
+			ConsensusNS:     2,
+			Type:            12,
+			Result:          0,
+			PayerAccountID:  3,
+			TransactionHash: hash,
 		},
 	}
 	mapTransactions = map[int64]transaction{
@@ -80,6 +85,10 @@ var (
 	dbTransactionResults = []transactionResult{
 		{ProtoID: 0, Result: "OK"},
 		{ProtoID: 1, Result: "INVALID_TRANSACTION"},
+	}
+	expectedTransaction = &types.Transaction{
+		Hash:       hexutils.SafeAddHexPrefix(hex.EncodeToString(hash)),
+		Operations: operations,
 	}
 	operations = []*types.Operation{
 		{
@@ -108,6 +117,202 @@ var (
 	tRepoTypesAsArray = []string{"CRYPTODELETE", "CRYPTOTRANSFER"}
 )
 
+func TestShouldSuccessFindBetween(t *testing.T) {
+	// given
+	tr, mock := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	mock.ExpectQuery(regexp.QuoteMeta(whereClauseBetweenConsensus)).
+		WithArgs(int64(1), int64(2)).
+		WillReturnRows(willReturnRows(transactionColumns, dbTransactions))
+	mock.ExpectQuery(regexp.QuoteMeta(whereTimestampsInConsensusTimestamp)).
+		WithArgs("1,2").
+		WillReturnRows(willReturnRows(cryptoTransferColumns, dbCryptoTransfers))
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
+		WillReturnRows(willReturnRows(transactionTypeColumns, dbTransactionTypes))
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionResults)).
+		WillReturnRows(willReturnRows(transactionResultColumns, dbTransactionResults))
+
+	// when
+	result, err := tr.FindBetween(1, 2)
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Nil(t, err)
+	assert.IsType(t, []*types.Transaction{expectedTransaction}, result)
+}
+
+func TestShouldFailFindBetweenNoTypes(t *testing.T) {
+	// given
+	tr, mock := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	mock.ExpectQuery(regexp.QuoteMeta(whereClauseBetweenConsensus)).
+		WithArgs(int64(1), int64(2)).
+		WillReturnRows(willReturnRows(transactionColumns, dbTransactions))
+	mock.ExpectQuery(regexp.QuoteMeta(whereTimestampsInConsensusTimestamp)).
+		WithArgs("1,2").
+		WillReturnRows(willReturnRows(cryptoTransferColumns, dbCryptoTransfers))
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
+		WillReturnRows(willReturnRows(transactionTypeColumns))
+
+	// when
+	result, err := tr.FindBetween(1, 2)
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Nil(t, result)
+	assert.IsType(t, rTypes.Error{}, *err)
+}
+
+func TestShouldFailFindBetweenEndBeforeStart(t *testing.T) {
+	// given
+	tr, _ := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	// when
+	result, err := tr.FindBetween(2, 1)
+
+	// then
+	assert.Nil(t, result)
+	assert.IsType(t, rTypes.Error{}, *err)
+}
+
+func TestShouldSuccessFindHashInBlock(t *testing.T) {
+	// given
+	tr, mock := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	mock.ExpectQuery(regexp.QuoteMeta(whereTransactionsByHashAndConsensusTimestamps)).
+		WithArgs(hash, int64(1), int64(2)).
+		WillReturnRows(willReturnRows(transactionColumns, dbTransactions))
+	rows := willReturnRows(cryptoTransferColumns, dbCryptoTransfers)
+	mock.ExpectQuery(regexp.QuoteMeta(whereTimestampsInConsensusTimestamp)).
+		WithArgs("1,2").
+		WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
+		WillReturnRows(willReturnRows(transactionTypeColumns, dbTransactionTypes))
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionResults)).
+		WillReturnRows(willReturnRows(transactionResultColumns, dbTransactionResults))
+
+	// when
+	result, err := tr.FindByHashInBlock(hashString, 1, 2)
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+
+	assert.Nil(t, err)
+	assert.Equal(t, expectedTransaction, result)
+}
+
+func TestShouldFailFindHashInBlockNoTypes(t *testing.T) {
+	// given
+	tr, mock := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	mock.ExpectQuery(regexp.QuoteMeta(whereTransactionsByHashAndConsensusTimestamps)).
+		WithArgs(hash, int64(1), int64(2)).
+		WillReturnRows(willReturnRows(transactionColumns, dbTransactions))
+	rows := willReturnRows(cryptoTransferColumns, dbCryptoTransfers)
+	mock.ExpectQuery(regexp.QuoteMeta(whereTimestampsInConsensusTimestamp)).
+		WithArgs("1,2").
+		WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
+		WillReturnRows(willReturnRows(transactionTypeColumns))
+
+	// when
+	result, err := tr.FindByHashInBlock(hashString, 1, 2)
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+
+	assert.Nil(t, result)
+	assert.IsType(t, rTypes.Error{}, *err)
+}
+
+func TestShouldFailFindHashInBlockNoReturnTransactions(t *testing.T) {
+	// given
+	tr, mock := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	mock.ExpectQuery(regexp.QuoteMeta(whereTransactionsByHashAndConsensusTimestamps)).
+		WithArgs(hash, int64(1), int64(2)).
+		WillReturnRows(willReturnRows(transactionColumns))
+
+	// when
+	result, err := tr.FindByHashInBlock(hashString, 1, 2)
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+
+	assert.Nil(t, result)
+	assert.Equal(t, errors.Errors[errors.TransactionNotFound], err)
+}
+
+func TestShouldFailFindHashInBlockInvalidHash(t *testing.T) {
+	// given
+	tr, _ := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	// when
+	result, err := tr.FindByHashInBlock("asd", 1, 2)
+
+	// then
+	assert.Nil(t, result)
+	assert.Equal(t, errors.Errors[errors.InvalidTransactionIdentifier], err)
+}
+
+func TestShouldFailConstructTransactionDueToNoStatuses(t *testing.T) {
+	// given
+	tr, mock := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	rows := willReturnRows(cryptoTransferColumns, dbCryptoTransfers)
+	mock.ExpectQuery(regexp.QuoteMeta(whereTimestampsInConsensusTimestamp)).
+		WithArgs("1,2").
+		WillReturnRows(rows)
+	rows = willReturnRows(transactionTypeColumns, dbTransactionTypes)
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
+		WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionResults)).
+		WillReturnRows(willReturnRows(transactionResultColumns))
+
+	// when
+	result, err := tr.constructTransaction(dbTransactions)
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+
+	assert.IsType(t, rTypes.Error{}, *err)
+	assert.Nil(t, result)
+}
+
+func TestShouldSuccessConstructTransaction(t *testing.T) {
+	// given
+	tr, mock := setupRepository(t)
+	defer tr.dbClient.DB().Close()
+
+	rows := willReturnRows(cryptoTransferColumns, dbCryptoTransfers)
+	mock.ExpectQuery(regexp.QuoteMeta(whereTimestampsInConsensusTimestamp)).
+		WithArgs("1,2").
+		WillReturnRows(rows)
+	rows = willReturnRows(transactionTypeColumns, dbTransactionTypes)
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
+		WillReturnRows(rows)
+	rows = willReturnRows(transactionResultColumns, dbTransactionResults)
+	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionResults)).
+		WillReturnRows(rows)
+
+	// when
+	result, err := tr.constructTransaction(dbTransactions)
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+
+	assert.Nil(t, err)
+	assert.Equal(t, expectedTransaction, result)
+}
+
 func TestShouldSuccessConstructionOperations(t *testing.T) {
 	// given
 	tr, mock := setupRepository(t)
@@ -122,6 +327,7 @@ func TestShouldSuccessConstructionOperations(t *testing.T) {
 
 	// when
 	result, err := tr.constructOperations(dbCryptoTransfers, mapTransactions)
+
 	// then
 	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Nil(t, err)
@@ -148,6 +354,7 @@ func TestShouldFailConstructionOperationsInvalidCryptoTransferEntityId(t *testin
 
 	// when
 	result, err := tr.constructOperations(invalidCryptoTransfers, mapTransactions)
+
 	// then
 	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Nil(t, result)
@@ -164,7 +371,7 @@ func TestShouldFailConstructionOperationsDueToStatusesError(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
 		WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionResults)).
-		WillReturnRows(sqlmock.NewRows(transactionResultColumns))
+		WillReturnRows(willReturnRows(transactionResultColumns))
 
 	// when
 	result, err := tr.constructOperations(dbCryptoTransfers, nil)
@@ -181,7 +388,7 @@ func TestShouldFailConstructionOperationsDueToTypesError(t *testing.T) {
 	defer tr.dbClient.DB().Close()
 
 	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
-		WillReturnRows(sqlmock.NewRows(transactionTypeColumns))
+		WillReturnRows(willReturnRows(transactionTypeColumns))
 
 	// when
 	result, err := tr.constructOperations(dbCryptoTransfers, nil)
@@ -241,7 +448,7 @@ func TestShouldFailReturnStatuses(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
 		WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionResults)).
-		WillReturnRows(sqlmock.NewRows(transactionResultColumns))
+		WillReturnRows(willReturnRows(transactionResultColumns))
 
 	// when
 	result, err := tr.Statuses()
@@ -262,7 +469,7 @@ func TestShouldFailReturnTypes(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
 		WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionResults)).
-		WillReturnRows(sqlmock.NewRows(transactionResultColumns))
+		WillReturnRows(willReturnRows(transactionResultColumns))
 
 	// when
 	result, err := tr.Types()
@@ -283,7 +490,7 @@ func TestShouldFailReturnTypesAsArray(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
 		WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionResults)).
-		WillReturnRows(sqlmock.NewRows(transactionResultColumns))
+		WillReturnRows(willReturnRows(transactionResultColumns))
 
 	// when
 	result, err := tr.TypesAsArray()
@@ -371,7 +578,7 @@ func TestShouldFailReturnTransactionTypesAndStatusesDueToNoResults(t *testing.T)
 	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
 		WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionResults)).
-		WillReturnRows(sqlmock.NewRows(transactionResultColumns))
+		WillReturnRows(willReturnRows(transactionResultColumns))
 
 	// when
 	result := tr.retrieveTransactionTypesAndStatuses()
@@ -387,9 +594,9 @@ func TestShouldFailReturnTransactionTypesAndStatusesDueToNoTypes(t *testing.T) {
 	defer tr.dbClient.DB().Close()
 
 	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionTypes)).
-		WillReturnRows(sqlmock.NewRows(transactionTypeColumns))
+		WillReturnRows(willReturnRows(transactionTypeColumns))
 	mock.ExpectQuery(regexp.QuoteMeta(selectTransactionResults)).
-		WillReturnRows(sqlmock.NewRows(transactionResultColumns))
+		WillReturnRows(willReturnRows(transactionResultColumns))
 
 	// when
 	result := tr.retrieveTransactionTypesAndStatuses()

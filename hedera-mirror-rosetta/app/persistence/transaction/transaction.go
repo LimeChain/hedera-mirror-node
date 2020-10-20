@@ -43,9 +43,13 @@ const (
 )
 
 const (
-	whereClauseBetweenConsensus         string = "consensus_ns >= ? AND consensus_ns <= ?"
+	whereClauseBetweenConsensus string = `SELECT * FROM transaction
+                                          WHERE consensus_ns >= $1 AND consensus_ns <= $2`
 	whereTimestampsInConsensusTimestamp string = `SELECT * FROM crypto_transfer
                                                   WHERE consensus_timestamp IN ($1)`
+	whereTransactionsByHashAndConsensusTimestamps string = `SELECT * FROM transaction
+                                                            WHERE transaction_hash = $1
+                                                            AND consensus_ns BETWEEN $2 AND $3`
 	selectTransactionResults string = "SELECT * FROM t_transaction_results"
 	selectTransactionTypes   string = "SELECT * FROM t_transaction_types"
 )
@@ -145,7 +149,7 @@ func (tr *TransactionRepository) FindBetween(start int64, end int64) ([]*types.T
 		return nil, errors.Errors[errors.StartMustNotBeAfterEnd]
 	}
 	var transactions []transaction
-	tr.dbClient.Where(whereClauseBetweenConsensus, start, end).Find(&transactions)
+	tr.dbClient.Raw(whereClauseBetweenConsensus, start, end).Find(&transactions)
 
 	sameHashMap := make(map[string][]transaction)
 	for _, t := range transactions {
@@ -170,7 +174,7 @@ func (tr *TransactionRepository) FindByHashInBlock(hashStr string, consensusStar
 	if err != nil {
 		return nil, errors.Errors[errors.InvalidTransactionIdentifier]
 	}
-	tr.dbClient.Where("transaction_hash = ? AND consensus_ns BETWEEN ? AND ?", transactionHash, consensusStart, consensusEnd).Find(&transactions)
+	tr.dbClient.Raw(whereTransactionsByHashAndConsensusTimestamps, transactionHash, consensusStart, consensusEnd).Find(&transactions)
 
 	if len(transactions) == 0 {
 		return nil, errors.Errors[errors.TransactionNotFound]
@@ -227,10 +231,7 @@ func (tr *TransactionRepository) constructOperations(cryptoTransfers []dbTypes.C
 		return nil, err
 	}
 
-	transactionStatuses, err := tr.Statuses()
-	if err != nil {
-		return nil, err
-	}
+	transactionStatuses, _ := tr.Statuses()
 
 	operations := make([]*types.Operation, len(cryptoTransfers))
 	for i, ct := range cryptoTransfers {
