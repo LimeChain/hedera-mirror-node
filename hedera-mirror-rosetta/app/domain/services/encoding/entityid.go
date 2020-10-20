@@ -84,15 +84,9 @@ func FromString(entityId string) (*EntityId, error) {
 	if err != nil {
 		return nil, errorShardId
 	}
-	if shardNum < 0 {
-		return nil, errorShardId
-	}
 
 	realmNum, err := parse.ToInt64(inputs[1])
 	if err != nil {
-		return nil, errorRealmId
-	}
-	if realmNum < 0 {
 		return nil, errorRealmId
 	}
 
@@ -100,8 +94,10 @@ func FromString(entityId string) (*EntityId, error) {
 	if err != nil {
 		return nil, errorEntityId
 	}
-	if entityNum < 0 {
-		return nil, errorEntityId
+
+	_, err = Encode(shardNum, realmNum, entityNum)
+	if err != nil {
+		return nil, err
 	}
 
 	return &EntityId{
