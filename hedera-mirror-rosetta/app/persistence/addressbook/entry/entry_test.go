@@ -160,6 +160,21 @@ func TestShouldFailReturnPeerId(t *testing.T) {
 	assert.Equal(t, errors.Errors[errors.InternalServerError], err)
 }
 
+func TestShouldFailReturnPeerIdNegative(t *testing.T) {
+	// given
+	abe := addressBookEntry{
+		Memo: "0.0.-2",
+	}
+
+	// when
+	result, err := abe.getPeerId()
+
+	// then
+	assert.Nil(t, result)
+	assert.IsType(t, rTypes.Error{}, *err)
+	assert.Equal(t, errors.Errors[errors.InternalServerError], err)
+}
+
 func setupRepository(t *testing.T) (*AddressBookEntryRepository, []string, sqlmock.Sqlmock) {
 	gormDbClient, mock := mocks.DatabaseMock(t)
 

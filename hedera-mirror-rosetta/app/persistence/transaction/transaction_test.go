@@ -38,8 +38,16 @@ import (
 )
 
 var (
-	firstAccount, _          = constructAccount(1)
-	secondAccount, _         = constructAccount(2)
+	firstAccount = &types.Account{EntityId: entityid.EntityId{
+		ShardNum:  0,
+		RealmNum:  0,
+		EntityNum: 1,
+	}}
+	secondAccount = &types.Account{EntityId: entityid.EntityId{
+		ShardNum:  0,
+		RealmNum:  0,
+		EntityNum: 2,
+	}}
 	hashString               = "1a00223d0a140a0c0891d0fef905109688f3a701120418d8c307120218061880c2d72f2202087872180a160a090a0418d8c30710cf0f0a090a0418fec40710d00f"
 	hash, _                  = hex.DecodeString(hexutils.SafeRemoveHexPrefix(hashString))
 	amount                   = types.Amount{Value: 1}
