@@ -42,11 +42,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Build Mirror Node
-        run: docker build --tag=${{env.image-tag}} .
-        working-directory: ${{env.working-directory}}/build
       - name: Run Mirror Node
-        run: docker run -d -p 5700:5700 ${{env.image-tag}}
+        run: docker-compose up --build -d
       - name: Wait for Mirror Node to start syncing
         run: bash ./wait-for-mirror-node.sh
         working-directory: ${{env.working-directory}}/scripts
