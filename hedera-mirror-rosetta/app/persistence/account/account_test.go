@@ -24,6 +24,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/test/mocks"
 	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
@@ -79,6 +80,22 @@ func TestShouldFailRetrieveBalanceAtBlockDueToInvalidAddress(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Nil(t, result)
 	assert.IsType(t, rTypes.Error{}, *err)
+}
+
+func TestShouldFailRetrieveBalanceAtBlockDueToInvalidAddressNegative(t *testing.T) {
+	// given
+	abr, _, mock := setupRepository(t)
+	defer abr.dbClient.DB().Close()
+
+	invalidAddressString := "0.0.-2"
+
+	// when
+	result, err := abr.RetrieveBalanceAtBlock(invalidAddressString, consensusTimestamp)
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Nil(t, result)
+	assert.Equal(t, errors.Errors[errors.InvalidAccount], err)
 }
 
 func TestShouldSuccessRetrieveBalanceAtBlock(t *testing.T) {

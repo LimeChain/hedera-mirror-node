@@ -23,6 +23,7 @@ package account
 import (
 	rTypes "github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/domain/types"
+	"github.com/hashgraph/hedera-mirror-node/hedera-mirror-rosetta/app/errors"
 	"github.com/jinzhu/gorm"
 )
 
@@ -80,13 +81,14 @@ func (ar *AccountRepository) RetrieveBalanceAtBlock(addressStr string, consensus
 	if err != nil {
 		return nil, err
 	}
-	entityID, _ := acc.ComputeEncodedID()
+	entityID, err1 := acc.ComputeEncodedID()
+	if err1 != nil {
+		return nil, errors.Errors[errors.InvalidAccount]
+	}
 
 	// gets the most recent balance before block
 	ab := &accountBalance{}
-	if ar.dbClient.
-		Raw(latestBalanceBeforeConsensus, entityID, consensusEnd).
-		Find(&ab).RecordNotFound() {
+	if ar.dbClient.Raw(latestBalanceBeforeConsensus, entityID, consensusEnd).Find(&ab).RecordNotFound() {
 		ab.Balance = 0
 	}
 

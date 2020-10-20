@@ -47,7 +47,7 @@ var (
 	transactionTypeColumns   = mocks.GetFieldsNamesToSnakeCase(transactionType{})
 	transactionResultColumns = mocks.GetFieldsNamesToSnakeCase(transactionResult{})
 	cryptoTransferColumns    = mocks.GetFieldsNamesToSnakeCase(common.CryptoTransfer{})
-	consesusTimestamp        = int64(1)
+	consensusTimestamp       = int64(1)
 	dbTransactions           = []transaction{
 		{
 			ConsensusNS:     1,
@@ -139,7 +139,7 @@ func TestShouldSuccessFindBetween(t *testing.T) {
 	// then
 	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Nil(t, err)
-	assert.IsType(t, []*types.Transaction{expectedTransaction}, result)
+	assert.Equal(t, []*types.Transaction{expectedTransaction}, result)
 }
 
 func TestShouldFailFindBetweenNoTypes(t *testing.T) {
@@ -175,7 +175,7 @@ func TestShouldFailFindBetweenEndBeforeStart(t *testing.T) {
 
 	// then
 	assert.Nil(t, result)
-	assert.IsType(t, rTypes.Error{}, *err)
+	assert.Equal(t, errors.Errors[errors.StartMustNotBeAfterEnd], err)
 }
 
 func TestShouldSuccessFindHashInBlock(t *testing.T) {
@@ -406,11 +406,11 @@ func TestShouldSuccessFindCryptoTransfers(t *testing.T) {
 
 	rows := willReturnRows(cryptoTransferColumns, dbCryptoTransfers)
 	mock.ExpectQuery(regexp.QuoteMeta(whereTimestampsInConsensusTimestamp)).
-		WithArgs(strconv.FormatInt(consesusTimestamp, 10)).
+		WithArgs(strconv.FormatInt(consensusTimestamp, 10)).
 		WillReturnRows(rows)
 
 	// when
-	res := tr.findCryptoTransfers([]int64{consesusTimestamp})
+	res := tr.findCryptoTransfers([]int64{consensusTimestamp})
 
 	// then
 	assert.NoError(t, mock.ExpectationsWereMet())

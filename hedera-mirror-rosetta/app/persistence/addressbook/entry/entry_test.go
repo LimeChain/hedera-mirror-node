@@ -56,7 +56,7 @@ var (
 			"port": int32(0),
 		},
 	}
-	expectedResult *types.AddressBookEntries = &types.AddressBookEntries{
+	expectedResult = &types.AddressBookEntries{
 		Entries: []*types.AddressBookEntry{expectedAddressBookEntry, expectedAddressBookEntry},
 	}
 )
