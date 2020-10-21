@@ -56,7 +56,6 @@ func (c *ConstructionAPIService) ConstructionCombine(ctx context.Context, reques
 
 	var transaction hedera.Transaction
 	err = transaction.UnmarshalBinary(bytesTransaction)
-
 	if err != nil {
 		return nil, errors.Errors[errors.TransactionUnmarshallingFailed]
 	}
@@ -225,7 +224,10 @@ func (c *ConstructionAPIService) handleCryptoTransferPayload(operations []*rType
 			return nil, errors.Errors[errors.InvalidAccount]
 		}
 
-		amount, _ := parse.ToInt64(operation.Amount.Value)
+		amount, err := parse.ToInt64(operation.Amount.Value)
+		if err != nil {
+			return nil, errors.Errors[errors.InvalidAmount]
+		}
 
 		if amount < 0 {
 			sender = account

@@ -29,15 +29,16 @@ import (
 )
 
 var (
-	validTxHash       = "0x1a660a640a20d25025bad248dbd4c6ca704eefba7ab4f3e3f48089fa5f20e4e1d10303f97ade1a40967f26876ad492cc27b4c384dc962f443bcc9be33cbb7add3844bc864de047340e7a78c0fbaf40ab10948dc570bbc25edb505f112d0926dffb65c93199e6d507223c0a130a0b08c7af94fa0510f7d9fc76120418d8c307120218041880c2d72f2202087872180a160a090a0418d8c30710cf0f0a090a0418fec40710d00f"
-	invalidTxHash     = "InvalidTxHash"
-	unmarshableTxHash = "0a140a0c088390b6fc0510def1f59801120418d8c307120218031880c2d72f2202087872180a160a090a0418d8c30710cf0f0a090a0418fec40710d00f"
+	validUnsignedTxHash = "0x1a00223d0a140a0c0891d0fef905109688f3a701120418d8c307120218061880c2d72f2202087872180a160a090a0418d8c30710cf0f0a090a0418fec40710d00f"
+	validSignedTxHash   = "0x1a660a640a20d25025bad248dbd4c6ca704eefba7ab4f3e3f48089fa5f20e4e1d10303f97ade1a40967f26876ad492cc27b4c384dc962f443bcc9be33cbb7add3844bc864de047340e7a78c0fbaf40ab10948dc570bbc25edb505f112d0926dffb65c93199e6d507223c0a130a0b08c7af94fa0510f7d9fc76120418d8c307120218041880c2d72f2202087872180a160a090a0418d8c30710cf0f0a090a0418fec40710d00f"
+	invalidTxHash       = "InvalidTxHash"
+	unmarshableTxHash   = "0a140a0c088390b6fc0510def1f59801120418d8c307120218031880c2d72f2202087872180a160a090a0418d8c30710cf0f0a090a0418fec40710d00f"
+	publicKeyBytes      = "d25025bad248dbd4c6ca704eefba7ab4f3e3f48089fa5f20e4e1d10303f97ade"
 )
 
 func dummyConstructionCombineRequest() *types.ConstructionCombineRequest {
 	unsignedTxHash := "0x1a00223c0a130a0b08c7af94fa0510f7d9fc76120418d8c307120218041880c2d72f2202087872180a160a090a0418d8c30710cf0f0a090a0418fec40710d00f"
 	signingPayloadBytes := "967f26876ad492cc27b4c384dc962f443bcc9be33cbb7add3844bc864de047340e7a78c0fbaf40ab10948dc570bbc25edb505f112d0926dffb65c93199e6d507"
-	publicKeyBytes := "d25025bad248dbd4c6ca704eefba7ab4f3e3f48089fa5f20e4e1d10303f97ade"
 	signatureBytes := "0a130a0b08c7af94fa0510f7d9fc76120418d8c307120218041880c2d72f2202087872180a160a090a0418d8c30710cf0f0a090a0418fec40710d00f"
 
 	return dummyConstructionCombineRequestWith(
@@ -152,19 +153,14 @@ func dummyPayloadsRequest(operations []*types.Operation) *types.ConstructionPayl
 	}
 }
 
-func TestNewAccountAPIService(t *testing.T) {
-	assert.IsType(t, &ConstructionAPIService{}, NewConstructionAPIService())
-}
-
 func TestNewConstructionAPIService(t *testing.T) {
-	constructionService := NewConstructionAPIService()
-	assert.IsType(t, &ConstructionAPIService{}, constructionService)
+	assert.IsType(t, &ConstructionAPIService{}, NewConstructionAPIService())
 }
 
 func TestConstructionCombine(t *testing.T) {
 	// given:
 	expectedConstructionCombineResponse := &types.ConstructionCombineResponse{
-		SignedTransaction: validTxHash,
+		SignedTransaction: validSignedTxHash,
 	}
 
 	// when:
@@ -175,10 +171,12 @@ func TestConstructionCombine(t *testing.T) {
 	assert.Nil(t, e)
 }
 
-func TestConstructionCombineThrowsWhenNoSingleSignature(t *testing.T) {
+func TestConstructionCombineThrowsWithMultipleSignatures(t *testing.T) {
 	// given:
 	exampleConstructionCombineRequest := dummyConstructionCombineRequest()
-	exampleConstructionCombineRequest.Signatures = []*types.Signature{}
+	exampleConstructionCombineRequest.Signatures = []*types.Signature{
+		{}, {},
+	}
 
 	// when:
 	res, e := NewConstructionAPIService().ConstructionCombine(nil, exampleConstructionCombineRequest)
@@ -199,6 +197,19 @@ func TestConstructionCombineThrowsWhenDecodeStringFails(t *testing.T) {
 	// then:
 	assert.Nil(t, res)
 	assert.Equal(t, errors.Errors[errors.TransactionDecodeFailed], e)
+}
+
+func TestConstructionCombineThrowsWhenUnmarshallFails(t *testing.T) {
+	// given:
+	exampleInvalidTxHashConstructionCombineRequest := dummyConstructionCombineRequest()
+	exampleInvalidTxHashConstructionCombineRequest.UnsignedTransaction = "0x6767"
+
+	// when:
+	res, e := NewConstructionAPIService().ConstructionCombine(nil, exampleInvalidTxHashConstructionCombineRequest)
+
+	// then:
+	assert.Nil(t, res)
+	assert.Equal(t, errors.Errors[errors.TransactionUnmarshallingFailed], e)
 }
 
 func TestConstructionCombineThrowsWithInvalidPublicKey(t *testing.T) {
@@ -238,16 +249,17 @@ func TestConstructionDerive(t *testing.T) {
 
 func TestConstructionHash(t *testing.T) {
 	// given:
-	exampleConstructionHashRequest := dummyConstructionHashRequest(validTxHash)
-	exampleConstructionHashResponse := &types.TransactionIdentifierResponse{
-		TransactionIdentifier: &types.TransactionIdentifier{Hash: "0x9768d458c755befcda5c6fca07e9f7693b94c429f9c414b0cea07163c402ddd44d1108f89b190d0dcabc423a3d45696d"},
+	txIdentifierHash := "0x9768d458c755befcda5c6fca07e9f7693b94c429f9c414b0cea07163c402ddd44d1108f89b190d0dcabc423a3d45696d"
+	exampleConstructionHashRequest := dummyConstructionHashRequest(validSignedTxHash)
+	expectedConstructHashResponse := &types.TransactionIdentifierResponse{
+		TransactionIdentifier: &types.TransactionIdentifier{Hash: txIdentifierHash},
 	}
 
 	// when:
 	res, e := NewConstructionAPIService().ConstructionHash(nil, exampleConstructionHashRequest)
 
 	// then:
-	assert.Equal(t, exampleConstructionHashResponse, res)
+	assert.Equal(t, expectedConstructHashResponse, res)
 	assert.Nil(t, e)
 }
 
@@ -279,7 +291,7 @@ func TestConstructionMetadata(t *testing.T) {
 
 func TestConstructionParse(t *testing.T) {
 	// given:
-	exampleConstructionParseRequest := dummyConstructionParseRequest(validTxHash, false)
+	exampleConstructionParseRequest := dummyConstructionParseRequest(validUnsignedTxHash, false)
 	expectedConstructionParseResponse := &types.ConstructionParseResponse{
 		Operations: []*types.Operation{
 			dummyOperation(0, "CRYPTOTRANSFER", "0.0.123352", "-1000"),
@@ -297,7 +309,7 @@ func TestConstructionParse(t *testing.T) {
 
 func TestConstructionParseSigned(t *testing.T) {
 	// given:
-	exampleConstructionParseRequest := dummyConstructionParseRequest(validTxHash, true)
+	exampleConstructionParseRequest := dummyConstructionParseRequest(validSignedTxHash, true)
 	expectedConstructionParseResponse := &types.ConstructionParseResponse{
 		Operations: []*types.Operation{
 			dummyOperation(0, "CRYPTOTRANSFER", "0.0.123352", "-1000"),
@@ -305,7 +317,7 @@ func TestConstructionParseSigned(t *testing.T) {
 		},
 		AccountIdentifierSigners: []*types.AccountIdentifier{
 			{
-				Address: "d25025bad248dbd4c6ca704eefba7ab4f3e3f48089fa5f20e4e1d10303f97ade",
+				Address: publicKeyBytes,
 			},
 		},
 	}
@@ -325,78 +337,6 @@ func TestConstructionParseThrowsWhenDecodeStringFails(t *testing.T) {
 	// then:
 	assert.Nil(t, res)
 	assert.Equal(t, errors.Errors[errors.TransactionDecodeFailed], e)
-}
-
-//func TestConstructionSubmit(t *testing.T) {
-//    // given:
-//    exampleConstructionSubmitRequest := &types.ConstructionSubmitRequest{
-//        NetworkIdentifier: networkIdentifier(),
-//        SignedTransaction: validTxHash,
-//    }
-//    // TODO: Come up with a transaction that will be a valid one, without the Expired Transaction Response
-//    // TODO: Is there a way to test this method without making a new transaction each time?
-//
-//    // when:
-//    NewConstructionAPIService().ConstructionSubmit(nil, exampleConstructionSubmitRequest)
-//
-//    // then:
-//    //assert.Nil(t, res)
-//    //assert.Nil(t, e)
-//}
-
-func TestConstructionSubmitThrowsWhenDecodeStringFails(t *testing.T) {
-	// given:
-	exampleConstructionSubmitRequest := &types.ConstructionSubmitRequest{
-		NetworkIdentifier: networkIdentifier(),
-		SignedTransaction: invalidTxHash,
-	}
-
-	// when:
-	res, e := NewConstructionAPIService().ConstructionSubmit(nil, exampleConstructionSubmitRequest)
-
-	// then:
-	assert.Nil(t, res)
-	assert.Equal(t, errors.Errors[errors.TransactionDecodeFailed], e)
-}
-
-func TestConstructionSubmitThrowsWhenUnmarshalBinaryFails(t *testing.T) {
-	constructionSubmitTxHash := "0xfc2267c53ef8a27e2ab65f0a6b5e5607ba33b9c8c8f7304d8cb4a77aee19107d"
-
-	// given:
-	exampleConstructionSubmitRequest := &types.ConstructionSubmitRequest{
-		NetworkIdentifier: networkIdentifier(),
-		SignedTransaction: constructionSubmitTxHash,
-	}
-
-	// when:
-	res, e := NewConstructionAPIService().ConstructionSubmit(nil, exampleConstructionSubmitRequest)
-
-	// then:
-	assert.Nil(t, res)
-	assert.Equal(t, errors.Errors[errors.TransactionUnmarshallingFailed], e)
-}
-
-func TestConstructionPreprocess(t *testing.T) {
-	// given:
-	expectedResult := &types.ConstructionPreprocessResponse{
-		Options: make(map[string]interface{}),
-	}
-
-	// when:
-	res, e := NewConstructionAPIService().ConstructionPreprocess(nil, dummyConstructionPreprocessRequest(true))
-
-	// then:
-	assert.Equal(t, expectedResult, res)
-	assert.Nil(t, e)
-}
-
-func TestConstructionPreprocessThrowsWithInvalidOperationsSum(t *testing.T) {
-	// when:
-	res, e := NewConstructionAPIService().ConstructionPreprocess(nil, dummyConstructionPreprocessRequest(false))
-
-	// then:
-	assert.Nil(t, res)
-	assert.IsType(t, &types.Error{}, e)
 }
 
 func TestConstructionPayloads(t *testing.T) {
@@ -454,4 +394,59 @@ func TestConstructionPayloadsThrowsWhenInvalidAccount(t *testing.T) {
 	// then:
 	assert.Nil(t, res)
 	assert.Equal(t, errors.Errors[errors.InvalidAccount], e)
+}
+
+func TestConstructionSubmitThrowsWhenDecodeStringFails(t *testing.T) {
+	// given:
+	exampleConstructionSubmitRequest := &types.ConstructionSubmitRequest{
+		NetworkIdentifier: networkIdentifier(),
+		SignedTransaction: invalidTxHash,
+	}
+
+	// when:
+	res, e := NewConstructionAPIService().ConstructionSubmit(nil, exampleConstructionSubmitRequest)
+
+	// then:
+	assert.Nil(t, res)
+	assert.Equal(t, errors.Errors[errors.TransactionDecodeFailed], e)
+}
+
+func TestConstructionSubmitThrowsWhenUnmarshalBinaryFails(t *testing.T) {
+	constructionSubmitTxHash := "0xfc2267c53ef8a27e2ab65f0a6b5e5607ba33b9c8c8f7304d8cb4a77aee19107d"
+
+	// given:
+	exampleConstructionSubmitRequest := &types.ConstructionSubmitRequest{
+		NetworkIdentifier: networkIdentifier(),
+		SignedTransaction: constructionSubmitTxHash,
+	}
+
+	// when:
+	res, e := NewConstructionAPIService().ConstructionSubmit(nil, exampleConstructionSubmitRequest)
+
+	// then:
+	assert.Nil(t, res)
+	assert.Equal(t, errors.Errors[errors.TransactionUnmarshallingFailed], e)
+}
+
+func TestConstructionPreprocess(t *testing.T) {
+	// given:
+	expectedResult := &types.ConstructionPreprocessResponse{
+		Options: make(map[string]interface{}),
+	}
+
+	// when:
+	res, e := NewConstructionAPIService().ConstructionPreprocess(nil, dummyConstructionPreprocessRequest(true))
+
+	// then:
+	assert.Equal(t, expectedResult, res)
+	assert.Nil(t, e)
+}
+
+func TestConstructionPreprocessThrowsWithInvalidOperationsSum(t *testing.T) {
+	// when:
+	res, e := NewConstructionAPIService().ConstructionPreprocess(nil, dummyConstructionPreprocessRequest(false))
+
+	// then:
+	assert.Nil(t, res)
+	assert.IsType(t, &types.Error{}, e)
 }
