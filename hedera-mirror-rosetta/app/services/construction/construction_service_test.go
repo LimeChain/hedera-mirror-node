@@ -32,7 +32,7 @@ var (
 	validUnsignedTxHash = "0x1a00223d0a140a0c0891d0fef905109688f3a701120418d8c307120218061880c2d72f2202087872180a160a090a0418d8c30710cf0f0a090a0418fec40710d00f"
 	validSignedTxHash   = "0x1a660a640a20d25025bad248dbd4c6ca704eefba7ab4f3e3f48089fa5f20e4e1d10303f97ade1a40967f26876ad492cc27b4c384dc962f443bcc9be33cbb7add3844bc864de047340e7a78c0fbaf40ab10948dc570bbc25edb505f112d0926dffb65c93199e6d507223c0a130a0b08c7af94fa0510f7d9fc76120418d8c307120218041880c2d72f2202087872180a160a090a0418d8c30710cf0f0a090a0418fec40710d00f"
 	invalidTxHash       = "InvalidTxHash"
-	unmarshableTxHash   = "0a140a0c088390b6fc0510def1f59801120418d8c307120218031880c2d72f2202087872180a160a090a0418d8c30710cf0f0a090a0418fec40710d00f"
+	unmarshableTxHash   = "0x6767"
 	publicKeyBytes      = "d25025bad248dbd4c6ca704eefba7ab4f3e3f48089fa5f20e4e1d10303f97ade"
 )
 
@@ -202,7 +202,7 @@ func TestConstructionCombineThrowsWhenDecodeStringFails(t *testing.T) {
 func TestConstructionCombineThrowsWhenUnmarshallFails(t *testing.T) {
 	// given:
 	exampleInvalidTxHashConstructionCombineRequest := dummyConstructionCombineRequest()
-	exampleInvalidTxHashConstructionCombineRequest.UnsignedTransaction = "0x6767"
+	exampleInvalidTxHashConstructionCombineRequest.UnsignedTransaction = unmarshableTxHash
 
 	// when:
 	res, e := NewConstructionAPIService().ConstructionCombine(nil, exampleInvalidTxHashConstructionCombineRequest)
@@ -337,6 +337,15 @@ func TestConstructionParseThrowsWhenDecodeStringFails(t *testing.T) {
 	// then:
 	assert.Nil(t, res)
 	assert.Equal(t, errors.Errors[errors.TransactionDecodeFailed], e)
+}
+
+func TestConstructionParseThrowsWhenUnmarshallFails(t *testing.T) {
+	// when:
+	res, e := NewConstructionAPIService().ConstructionParse(nil, dummyConstructionParseRequest(unmarshableTxHash, false))
+
+	// then:
+	assert.Nil(t, res)
+	assert.Equal(t, errors.Errors[errors.TransactionUnmarshallingFailed], e)
 }
 
 func TestConstructionPayloads(t *testing.T) {
