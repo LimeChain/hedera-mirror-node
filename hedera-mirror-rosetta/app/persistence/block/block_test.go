@@ -335,7 +335,7 @@ func TestShouldFailRetrieveLatestNotFound(t *testing.T) {
 
 	// then
 	assert.NoError(t, mock.ExpectationsWereMet())
-	assert.IsType(t, errors.Errors[errors.BlockNotFound], err)
+	assert.Equal(t, errors.Errors[errors.BlockNotFound], err)
 	assert.Nil(t, result)
 }
 
