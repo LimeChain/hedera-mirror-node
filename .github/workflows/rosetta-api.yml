@@ -42,8 +42,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Build Mirror Node
-        run: docker build --tag=${{env.image-tag}} .
+      - name: Build Mirror Node All-in-One
+        run: docker build --tag=${{env.image-tag}} -f hedera-mirror-rosetta/scripts/validation/Dockerfile .
         working-directory: ${{env.working-directory}}/build
       - name: Run Mirror Node
         run: docker run -d -p 5700:5700 ${{env.image-tag}}
