@@ -608,7 +608,7 @@ func TestShouldFailGetRecordFilesStartingIndex(t *testing.T) {
 	// then
 	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Nil(t, result)
-	assert.IsType(t, rTypes.Error{}, *err)
+	assert.IsType(t, errors.Errors[errors.NodeIsStarting], err)
 }
 
 func TestShouldSuccessReturnRecordFileTableName(t *testing.T) {
