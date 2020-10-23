@@ -43,10 +43,11 @@ const (
                                            rcd_index.block_index
                                     FROM   (SELECT *
                                             FROM   record_file
-                                            WHERE  consensus_end = (SELECT MAX(consensus_end)
-                                                                    FROM   record_file)) AS rd,
+                                            WHERE  file_hash = (SELECT status_value FROM t_application_status
+                                                                WHERE status_code = 'LAST_PROCESSED_RECORD_HASH')) AS rd,
                                            (SELECT COUNT(*) - 1 - $1 AS block_index
-                                            FROM   record_file) AS rcd_index`
+                                            FROM   record_file
+                                            WHERE  load_end IS NOT NULL) AS rcd_index`
 
 	// selectByHashWithIndex - Selects the row with a given file_hash and adds additional info about the position of that row using count.
 	//The information about the position is used as Block Index
@@ -57,8 +58,8 @@ const (
                                            rcd.block_index
                                     FROM   (SELECT *
                                             FROM   record_file
-                                            WHERE  file_hash = $1) AS rd,
-                                           (SELECT Count(*) - 1 - $2 AS block_index
+                                            WHERE  file_hash = $1 AND load_end IS NOT NULL) AS rd,
+                                           (SELECT COUNT(*) - 1 - $2 AS block_index
                                             FROM   record_file
                                             WHERE  consensus_end <= (SELECT consensus_end
                                                                      FROM   record_file
@@ -97,7 +98,7 @@ type recordFile struct {
 
 // TableName - Set table name to be `record_file`
 func (recordFile) TableName() string {
-	return "record_file"
+	return tableNameRecordFile
 }
 
 // BlockRepository struct that has connection to the Database
@@ -180,6 +181,9 @@ func (br *BlockRepository) RetrieveLatest() (*types.Block, *rTypes.Error) {
 	if br.dbClient.Raw(selectLatestWithIndex, *startingIndex).Scan(rf).RecordNotFound() {
 		return nil, errors.Errors[errors.BlockNotFound]
 	}
+	if rf.FileHash == "" {
+		return nil, errors.Errors[errors.BlockNotFound]
+	}
 
 	return br.constructBlockResponse(rf, rf.BlockIndex), nil
 }
@@ -195,7 +199,7 @@ func (br *BlockRepository) findRecordFileByHash(hash string) (*recordFile, *rTyp
 		return nil, errors.Errors[errors.BlockNotFound]
 	}
 
-	if rf.BlockIndex < 0 {
+	if rf.BlockIndex < 0 || rf.FileHash == "" {
 		return nil, errors.Errors[errors.BlockNotFound]
 	}
 
