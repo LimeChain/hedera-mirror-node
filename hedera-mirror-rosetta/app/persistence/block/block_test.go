@@ -55,70 +55,6 @@ var (
 	}
 )
 
-func TestShouldFailFindByIdentifierNoAccountBalances(t *testing.T) {
-	// given
-	br, mock := setupRepository(t)
-	defer br.dbClient.DB().Close()
-
-	mock.ExpectQuery(regexp.QuoteMeta(selectAccountBalancesCount)).
-		WillReturnRows(sqlmock.NewRows(countColumns).AddRow(0))
-
-	// when
-	result, err := br.FindByIdentifier(1, "0x12345")
-
-	// then
-	assert.NoError(t, mock.ExpectationsWereMet())
-	assert.IsType(t, rTypes.Error{}, *err)
-	assert.Nil(t, result)
-}
-
-func TestShouldSuccessFindByIdentifier(t *testing.T) {
-	// given
-	br, mock := setupRepository(t)
-	defer br.dbClient.DB().Close()
-
-	mock.ExpectQuery(regexp.QuoteMeta(selectAccountBalancesCount)).
-		WillReturnRows(sqlmock.NewRows(countColumns).AddRow(expectedAccountBalancesCount))
-	mock.ExpectQuery(regexp.QuoteMeta(selectSkippedRecordFilesCount)).
-		WillReturnRows(sqlmock.NewRows(countColumns).AddRow(expectedSkippedRecordFiles))
-	mock.ExpectQuery(regexp.QuoteMeta(selectByHashWithIndex)).
-		WillReturnRows(sqlmock.NewRows(recordFileColumns).AddRow(mocks.GetFieldsValuesAsDriverValue(dbRecordFile)...))
-
-	// when
-	result, err := br.FindByIdentifier(dbRecordFile.BlockIndex, "0x12345")
-
-	// then
-	assert.NoError(t, mock.ExpectationsWereMet())
-	assert.Equal(t, expectedBlock, result)
-	assert.Nil(t, err)
-}
-
-func TestShouldFailFindByIdentifierMismatchIndices(t *testing.T) {
-	// given
-	mismatchingRecordFileIndex := &recordFile{
-		BlockIndex: dbRecordFile.BlockIndex + 1,
-		FileHash:   "0x12345",
-	}
-	br, mock := setupRepository(t)
-	defer br.dbClient.DB().Close()
-
-	mock.ExpectQuery(regexp.QuoteMeta(selectAccountBalancesCount)).
-		WillReturnRows(sqlmock.NewRows(countColumns).AddRow(expectedAccountBalancesCount))
-	mock.ExpectQuery(regexp.QuoteMeta(selectSkippedRecordFilesCount)).
-		WillReturnRows(sqlmock.NewRows(countColumns).AddRow(expectedSkippedRecordFiles))
-	mock.ExpectQuery(regexp.QuoteMeta(selectByHashWithIndex)).
-		WillReturnRows(sqlmock.NewRows(recordFileColumns).
-			AddRow(mocks.GetFieldsValuesAsDriverValue(mismatchingRecordFileIndex)...))
-
-	// when
-	result, err := br.FindByIdentifier(dbRecordFile.BlockIndex, "0x12345")
-
-	// then
-	assert.NoError(t, mock.ExpectationsWereMet())
-	assert.Equal(t, errors.Errors[errors.BlockNotFound], err)
-	assert.Nil(t, result)
-}
-
 func TestShouldSuccessFindByIndex(t *testing.T) {
 	// given
 	br, mock := setupRepository(t)
@@ -217,6 +153,70 @@ func TestShouldSuccessFindByHash(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 	assert.Nil(t, err)
 	assert.Equal(t, expectedBlock, result)
+}
+
+func TestShouldFailFindByIdentifierNoAccountBalances(t *testing.T) {
+	// given
+	br, mock := setupRepository(t)
+	defer br.dbClient.DB().Close()
+
+	mock.ExpectQuery(regexp.QuoteMeta(selectAccountBalancesCount)).
+		WillReturnRows(sqlmock.NewRows(countColumns).AddRow(0))
+
+	// when
+	result, err := br.FindByIdentifier(1, "0x12345")
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.IsType(t, rTypes.Error{}, *err)
+	assert.Nil(t, result)
+}
+
+func TestShouldSuccessFindByIdentifier(t *testing.T) {
+	// given
+	br, mock := setupRepository(t)
+	defer br.dbClient.DB().Close()
+
+	mock.ExpectQuery(regexp.QuoteMeta(selectAccountBalancesCount)).
+		WillReturnRows(sqlmock.NewRows(countColumns).AddRow(expectedAccountBalancesCount))
+	mock.ExpectQuery(regexp.QuoteMeta(selectSkippedRecordFilesCount)).
+		WillReturnRows(sqlmock.NewRows(countColumns).AddRow(expectedSkippedRecordFiles))
+	mock.ExpectQuery(regexp.QuoteMeta(selectByHashWithIndex)).
+		WillReturnRows(sqlmock.NewRows(recordFileColumns).AddRow(mocks.GetFieldsValuesAsDriverValue(dbRecordFile)...))
+
+	// when
+	result, err := br.FindByIdentifier(dbRecordFile.BlockIndex, "0x12345")
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Equal(t, expectedBlock, result)
+	assert.Nil(t, err)
+}
+
+func TestShouldFailFindByIdentifierMismatchIndices(t *testing.T) {
+	// given
+	mismatchingRecordFileIndex := &recordFile{
+		BlockIndex: dbRecordFile.BlockIndex + 1,
+		FileHash:   "0x12345",
+	}
+	br, mock := setupRepository(t)
+	defer br.dbClient.DB().Close()
+
+	mock.ExpectQuery(regexp.QuoteMeta(selectAccountBalancesCount)).
+		WillReturnRows(sqlmock.NewRows(countColumns).AddRow(expectedAccountBalancesCount))
+	mock.ExpectQuery(regexp.QuoteMeta(selectSkippedRecordFilesCount)).
+		WillReturnRows(sqlmock.NewRows(countColumns).AddRow(expectedSkippedRecordFiles))
+	mock.ExpectQuery(regexp.QuoteMeta(selectByHashWithIndex)).
+		WillReturnRows(sqlmock.NewRows(recordFileColumns).
+			AddRow(mocks.GetFieldsValuesAsDriverValue(mismatchingRecordFileIndex)...))
+
+	// when
+	result, err := br.FindByIdentifier(dbRecordFile.BlockIndex, "0x12345")
+
+	// then
+	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Equal(t, errors.Errors[errors.BlockNotFound], err)
+	assert.Nil(t, result)
 }
 
 func TestShouldSuccessRetrieveGenesis(t *testing.T) {
