@@ -58,7 +58,6 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Mirror Node All-in-One
         run: docker build --tag=${{env.image-tag}} -f hedera-mirror-rosetta/scripts/validation/Dockerfile .
-        working-directory: .
       - name: Run Mirror Node
         run: docker run -d -p 5700:5700 ${{env.image-tag}}
       - name: Wait for Mirror Node to start syncing
