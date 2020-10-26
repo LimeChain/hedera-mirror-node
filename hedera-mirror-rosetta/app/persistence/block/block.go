@@ -34,7 +34,8 @@ const (
 )
 
 const (
-	// selectLatestWithIndex - Selects row with the latest consensus_end and adds additional info about the position of that row using count.
+	// selectLatestWithIndex - Selects row which hash is equal to the last processed record hash
+	// and adds additional information about the position of that row using count (counts only loaded record files).
 	// The information about the position is used as Block Index
 	selectLatestWithIndex string = `SELECT rd.file_hash,
                                            rd.consensus_start,
@@ -49,8 +50,9 @@ const (
                                             FROM   record_file
                                             WHERE  load_end IS NOT NULL) AS rcd_index`
 
-	// selectByHashWithIndex - Selects the row with a given file_hash and adds additional info about the position of that row using count.
-	//The information about the position is used as Block Index
+	// selectByHashWithIndex - Selects the row which is loaded by a given file_hash
+	// and adds additional info about the position of that row using count.
+	// The information about the position is used as Block Index
 	selectByHashWithIndex string = `SELECT rd.file_hash,
                                            rd.consensus_start,
                                            rd.consensus_end,

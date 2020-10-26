@@ -404,7 +404,7 @@ func TestShouldFailFindRecordFileByHashNoAccountBalances(t *testing.T) {
 	assert.Nil(t, result)
 }
 
-func TestShouldFailFindRecordFileByHashBlockNotFound(t *testing.T) {
+func TestShouldFailFindRecordFileByHashNegativeBlockIndex(t *testing.T) {
 	// given
 	invalidRecordFile := &recordFile{
 		BlockIndex: -1,
