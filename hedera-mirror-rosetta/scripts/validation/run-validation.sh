@@ -25,9 +25,16 @@ function run_testnet() {
     echo Running TESTNET Validation
     run_from_genesis
 }
+function run_mainnet() {
+    echo Running MAINNET Validation
+    run_from_genesis
+}
 case $network in
     "testnet")
         run_testnet
+    ;;
+    "mainnet")
+        run_mainnet
     ;;
     *)
         network="demo"

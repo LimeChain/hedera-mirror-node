@@ -1,7 +1,7 @@
 {
   "network": {
     "blockchain": "Hedera",
-    "network": "testnet",
+    "network": "mainnet",
     "sub_network_identifier": {
       "network": "shard 0 realm 0"
     }
@@ -9,7 +9,7 @@
   "retry_elapsed_time": 5,
   "online_url": "http://localhost:5700",
   "data_directory": "",
-  "http_timeout": 20,
+  "http_timeout": 10,
   "tip_delay": 300,
   "data": {
     "reconciliation_disabled": false,
