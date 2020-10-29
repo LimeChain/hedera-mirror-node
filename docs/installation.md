@@ -106,10 +106,10 @@ cd hedera-mirror-rosetta/scripts/validation
 ./run-validation.sh
 ```
 
-Currently, Rosetta CLI Validation supports only `DEMO` and `TESTNET`, where
-`DEMO` is default and `TESTNET` can be run via:
+Currently, Rosetta CLI Validation supports only `DEMO`, `MAINNET` and `TESTNET`, where
+`DEMO` is default and `MAINNET` or `TESTNET` can be run via:
 ```console
-./run-validation.sh testnet
+./run-validation.sh <mainnet|testnet>
 ```
 
 #### Rosetta All-in-One Dockerfile configuration
